@@ -1,6 +1,10 @@
 from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Tuple
 from backend.schemas.transaction import Transaction, FeatureVector
+from backend.engine.telemetry_proxy import default_telemetry_imputer, TelemetryProxyImputer
+from backend.engine.payee_memory import default_payee_memory, TrustedPayeeMemory
+from backend.engine.cold_start_mule import default_cold_start_scorer, ColdStartMuleScorer
+from backend.consortium.i4c_registry import default_i4c_registry, SimulatedI4CConsortiumRegistry
 
 HIGH_RISK_KEYWORDS = [
     "cbi", "rbi", "police", "arrest", "customs", "narcotics",
@@ -39,12 +43,6 @@ class VelocityCache:
                 v24_count += 1
 
         return v1_count, v1_amount, v24_count
-
-
-from backend.engine.telemetry_proxy import default_telemetry_imputer, TelemetryProxyImputer
-from backend.engine.payee_memory import default_payee_memory, TrustedPayeeMemory
-from backend.engine.cold_start_mule import default_cold_start_scorer, ColdStartMuleScorer
-from backend.consortium.i4c_registry import default_i4c_registry, SimulatedI4CConsortiumRegistry
 
 class FeaturePipeline:
     def __init__(
