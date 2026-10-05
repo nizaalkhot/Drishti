@@ -1,5 +1,11 @@
 # 🛡️ Drishti: Agentic Scam & Fraud Intelligence for Banks
 
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-blue)](https://www.python.org/)
+[![Framework](https://img.shields.io/badge/Agent_Framework-Google_ADK-green)](https://github.com/google/adk)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/Frontend-React_18-61DAFB.svg)](https://react.dev)
+
 > **"Stop the scam before the money moves."**  
 > Advanced multi-agent defense system specifically engineered to intercept **Authorized Push Payment (APP) fraud** (Digital Arrest, Fake KYC APKs, Task Scams, Mule Syndicates) in real-time.
 
@@ -186,3 +192,11 @@ python scripts/record_showcase_mp4.py
 - **Layer 1 p95 Latency:** `0.10 ms` (SLA: `< 15 ms`)
 - **Layer 2 Decision Latency:** `0.11 ms`
 - **Regulatory Citation Grounding:** `100.0%` (RBI Master Directions / FIU-IND)
+
+---
+
+## 📄 License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.  
+Copyright © 2026 Nizaal Khot and Drishti Contributors.
+
