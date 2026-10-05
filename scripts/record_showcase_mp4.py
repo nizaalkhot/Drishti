@@ -12,7 +12,7 @@ import imageio_ffmpeg
 
 ARTIFACT_DIR = r"C:\Users\Acer\.gemini\antigravity-ide\brain\43d1aff1-0a13-4eaf-9dcd-e0e6fca6ca91"
 VIDEO_TEMP_DIR = os.path.join(ARTIFACT_DIR, "video_temp")
-OUTPUT_MP4_PATH_PROJECT = r"d:\Antigravity projects\Drishti\drishti_showcase.mp4"
+OUTPUT_MP4_PATH_PROJECT = r"d:\Antigravity projects\Drishti\assets\videos\drishti_showcase.mp4"
 OUTPUT_MP4_PATH_ARTIFACT = os.path.join(ARTIFACT_DIR, "drishti_showcase.mp4")
 
 os.makedirs(VIDEO_TEMP_DIR, exist_ok=True)
