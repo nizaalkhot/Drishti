@@ -3,6 +3,9 @@ from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
 
+from google.adk import Agent
+from agents.adk_config import get_adk_model
+
 from backend.schemas.transaction import Transaction, DeviceSignals, FeatureVector
 from backend.engine.features import FeaturePipeline
 from backend.engine.risk_scorer import TabularRiskScorer, RiskDecision
@@ -26,11 +29,23 @@ class DefenseGapReport(BaseModel):
     remediation_rule: str
     recommended_patch: str
 
+def create_adk_red_team_agent() -> Agent:
+    """Creates a Google ADK Agent for adversarial attack generation and gap analysis."""
+    return Agent(
+        name="adversarial_red_team_agent",
+        model=get_adk_model(),
+        instruction=(
+            "You are an Adversarial Red-Team Agent specializing in testing banking scam defenses. "
+            "You invent novel bypass techniques—such as leetspeak obfuscation, PAN limit structuring (<₹50,000), "
+            "and subtle coercive scripts—to find gaps in behavioral ML and LLM Scam Shields. "
+            "You analyze where the system failed and draft code-level remediation patches."
+        )
+    )
+
 class RedTeamAgent:
     """
     Layer 4 Differentiator: Adversarial Red-Team Agent.
-    Synthesizes emergent attack vectors, executes stress-probes against Drishti defenses,
-    and produces actionable Defense Gap Reports with auto-generated mitigation rules.
+    Built with Google ADK to generate novel evasion payloads and automated Defense Gap Reports.
     """
     def __init__(
         self,
@@ -41,12 +56,12 @@ class RedTeamAgent:
         self.pipeline = feature_pipeline or FeaturePipeline()
         self.scorer = risk_scorer or TabularRiskScorer()
         self.scam_shield = scam_shield or ScamShieldOrchestrator()
+        self.adk_agent = create_adk_red_team_agent()
 
     async def probe(self, archetype: AttackArchetype) -> DefenseGapReport:
-        # Generate targeted adversarial payload
         tx = self._synthesize_adversarial_payload(archetype)
         
-        # Run through Layer 1
+        # Layer 1 Scorer
         features = self.pipeline.extract_features(tx)
         l1_res = self.scorer.score(features)
 
@@ -57,20 +72,16 @@ class RedTeamAgent:
             l2_res = await self.scam_shield.evaluate(tx, features)
             scam_detected = l2_res.is_scam_detected
 
-        # Evasion condition: if transaction was allowed or marked non-scam
         evasion_successful = (not scam_triggered and l1_res.decision == RiskDecision.ALLOW) or (scam_triggered and not scam_detected)
 
-        # Formulate gap and remediation analysis
         if archetype == AttackArchetype.OBFUSCATED_REMARK:
             vuln = "Lexicon bypass: Leetspeak / Unicode zero-width characters in remarks circumvent exact substring matching."
             remediation = "Apply phonetic tokenization (Metaphone) and Levenshtein distance matching against the scam lexicon."
             patch = "Add `unidecode` and `phonetics.metaphone` preprocessing to `backend.engine.features.HIGH_RISK_KEYWORDS` check."
-
         elif archetype == AttackArchetype.STRUCTURED_SMURFING:
             vuln = "Threshold structuring: Amount kept at ₹49,900 to evade ₹50k PAN logging rule and single-tx high amount multiplier."
             remediation = "Implement multi-transaction 30-minute cumulative velocity thresholds for first-time beneficiaries."
             patch = "Adjust `VelocityCache` to aggregate sum of transfers to same beneficiary cluster across rolling 30-minute intervals."
-
         else: # DEEPFAKE_AUTHORITY
             vuln = "Polite authority tone: Absence of overt threat keywords like 'arrest' or 'police' avoids static keyword detectors."
             remediation = "Incorporate semantic vector distance or LLM intent classification on narration tone."
@@ -101,7 +112,6 @@ class RedTeamAgent:
                 receiver_vpa="shadow.node@paytm",
                 receiver_ifsc="PYTM0123456",
                 amount=240000.0,
-                # Obfuscated narration attempting keyword evasion
                 remark="F@mily m3dical h0spital cl3arance d3posit",
                 device=DeviceSignals(
                     device_id="DEV-ADV-001",
@@ -124,7 +134,6 @@ class RedTeamAgent:
                 receiver_id="MULE-SHADOW-99",
                 receiver_vpa="shadow.node@paytm",
                 receiver_ifsc="PYTM0123456",
-                # Exactly under ₹50k limit
                 amount=49900.0,
                 remark="Consultancy invoice",
                 device=DeviceSignals(

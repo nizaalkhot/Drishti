@@ -63,7 +63,7 @@ sse_clients: List[asyncio.Queue] = []
 
 async def broadcast_event(event_type: str, data: Dict[str, Any]):
     dead_queues = []
-    payload = json.dumps({"type": event_type, "data": data, "timestamp": time.time()})
+    payload = json.dumps({"type": event_type, "data": data, "timestamp": time.time()}, default=str)
     for q in sse_clients:
         try:
             await q.put(payload)
@@ -265,7 +265,7 @@ async def dismiss_case(case_id: str, req: DismissRequest):
 @app.post("/api/v1/redteam/probe", response_model=DefenseGapReport)
 async def redteam_probe(req: RedTeamProbeRequest):
     report = await red_team.probe(req.archetype)
-    await broadcast_event("REDTEAM_PROBE_COMPLETED", report.model_dump())
+    await broadcast_event("REDTEAM_PROBE_COMPLETED", report.model_dump(mode="json"))
     return report
 
 @app.get("/api/v1/metrics/roi")

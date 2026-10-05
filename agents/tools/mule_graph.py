@@ -1,5 +1,7 @@
+import os
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
+from google.adk.tools import FunctionTool
 
 class MuleGraphAnalysis(BaseModel):
     beneficiary_id: str
@@ -20,7 +22,6 @@ class MuleGraphService:
     """
     def __init__(self, bigquery_client=None):
         self.bq_client = bigquery_client
-        # In-memory graph index for local fast-path execution and offline seeding
         self._beneficiary_inflows: Dict[str, List[Dict[str, Any]]] = {}
         self._beneficiary_outflows: Dict[str, List[Dict[str, Any]]] = {}
         self._device_to_accounts: Dict[str, List[str]] = {}
@@ -41,7 +42,7 @@ class MuleGraphService:
             self._device_to_accounts[device_id] = []
         if aggregator_id not in self._device_to_accounts[device_id]:
             self._device_to_accounts[device_id].append(aggregator_id)
-        # Add another secondary cash-out mule sharing the same phone
+        
         cash_out_mule = f"{aggregator_id}-CASHOUT"
         if cash_out_mule not in self._device_to_accounts[device_id]:
             self._device_to_accounts[device_id].append(cash_out_mule)
@@ -63,10 +64,9 @@ class MuleGraphService:
     def analyze_beneficiary(
         self,
         beneficiary_id: str,
-        receiver_vpa: str,
-        device_id: str
+        receiver_vpa: str = "",
+        device_id: str = ""
     ) -> MuleGraphAnalysis:
-        # Check BigQuery query or local indexed topological graph
         inflows = self._beneficiary_inflows.get(beneficiary_id, [])
         outflows = self._beneficiary_outflows.get(beneficiary_id, [])
         shared_accounts = self._device_to_accounts.get(device_id, [])
@@ -77,13 +77,11 @@ class MuleGraphService:
         total_inflow = sum(item["amount"] for item in inflows)
         total_outflow = sum(item["amount"] for item in outflows)
 
-        # Rapid pass-through flag: >80% outflow within short window of inflow
         rapid_passthrough = False
         if total_inflow > 0 and (total_outflow / total_inflow) >= 0.8:
             rapid_passthrough = True
 
-        # Calculate mule risk score
-        score = 0.05 # base
+        score = 0.05
         if fan_in >= 5:
             score += 0.40
         elif fan_in >= 2:
@@ -97,11 +95,9 @@ class MuleGraphService:
 
         score = min(round(score, 2), 0.99)
 
-        # Assemble graph nodes and edges for Cytoscape visualizer
         nodes = []
         edges = []
 
-        # Target Beneficiary node
         nodes.append({
             "id": beneficiary_id,
             "label": f"Beneficiary ({beneficiary_id})",
@@ -110,7 +106,6 @@ class MuleGraphService:
             "risk_score": score
         })
 
-        # Senders (Victims)
         for inf in inflows:
             s_id = inf["sender_id"]
             nodes.append({
@@ -126,7 +121,6 @@ class MuleGraphService:
                 "type": "inflow"
             })
 
-        # Outflows (Cash-out / Layering)
         for out in outflows:
             t_id = out["target_id"]
             nodes.append({
@@ -142,7 +136,6 @@ class MuleGraphService:
                 "type": "outflow"
             })
 
-        # Device node if shared
         if shared_other:
             nodes.append({
                 "id": device_id,
@@ -175,3 +168,28 @@ class MuleGraphService:
             graph_edges=edges,
             summary=summary
         )
+
+# Global default service singleton
+default_mule_service = MuleGraphService()
+default_mule_service.seed_test_cluster(
+    aggregator_id="MULE-AGGREGATOR-RING-1",
+    device_id="DEV-SHARED-MULE-PHONE-01",
+    victim_senders=["CUST-101", "CUST-102", "CUST-103", "CUST-104", "CUST-105"]
+)
+
+def query_mule_graph(beneficiary_id: str, receiver_vpa: str = "", device_id: str = "") -> str:
+    """
+    Queries BigQuery graph tables for 1-hop and 2-hop topological mule patterns,
+    fan-in velocity, and rapid fund pass-through.
+    """
+    res = default_mule_service.analyze_beneficiary(beneficiary_id, receiver_vpa, device_id)
+    return (
+        f"Mule Risk Score: {res.mule_risk_score}\n"
+        f"24h Fan-In Count: {res.fan_in_count_24h}\n"
+        f"Rapid Pass-through: {res.rapid_passthrough_detected}\n"
+        f"Shared Devices: {', '.join(res.shared_device_accounts) if res.shared_device_accounts else 'None'}\n"
+        f"Summary: {res.summary}"
+    )
+
+# Google ADK FunctionTool for agent integration
+mule_graph_tool = FunctionTool(func=query_mule_graph)

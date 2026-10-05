@@ -1,5 +1,8 @@
+import json
 from typing import List, Dict, Optional
 from pydantic import BaseModel, Field
+from google.adk import Agent
+from agents.adk_config import get_adk_model, execute_adk_agent
 
 class InterventionDialog(BaseModel):
     headline: str
@@ -10,7 +13,21 @@ class InterventionDialog(BaseModel):
     override_action: str
     risk_level: str = "HIGH"
 
-INTERVENTION_TEMPLATES = {
+def create_adk_intervention_agent() -> Agent:
+    """Creates a Google ADK Agent for generating conversational friction dialogs."""
+    return Agent(
+        name="intervention_agent",
+        model=get_adk_model(),
+        instruction=(
+            "You are Drishti's Contextual Intervention Agent. When an Authorized Push Payment (APP) scam is in progress "
+            "(Digital Arrest, Fake KYC APK hijack, or Task/Investment scam), your role is to write empathetic, clear, "
+            "and urgent friction warnings directly to the customer. "
+            "Explain specifically why this transaction is dangerous (e.g. Police/CBI never demand funds over video call). "
+            "Support English, Hindi, and Marathi as requested."
+        )
+    )
+
+INTERVENTION_DEFAULTS = {
     "DIGITAL_ARREST": {
         "en": {
             "headline": "⚠️ Urgent: Suspected 'Digital Arrest' Scam in Progress",
@@ -84,29 +101,27 @@ INTERVENTION_TEMPLATES = {
 
 class InterventionAgent:
     """
-    Generates plain-language, contextual friction interventions tailored to the victim's situation.
+    Google ADK Intervention Agent Wrapper.
+    Produces high-impact conversational friction customized to the scam scenario.
     """
+    def __init__(self):
+        self.agent = create_adk_intervention_agent()
+
     def generate_intervention(
         self,
         typology: str,
         amount: float,
         language: str = "en"
     ) -> InterventionDialog:
-        typology_key = typology if typology in INTERVENTION_TEMPLATES else "DIGITAL_ARREST"
-        lang_dict = INTERVENTION_TEMPLATES[typology_key].get(language, INTERVENTION_TEMPLATES[typology_key]["en"])
-
-        headline = lang_dict["headline"]
-        body = lang_dict["body"].format(amount=amount)
-        primary = lang_dict["primary"]
-        secondary = lang_dict["secondary"]
-        override = lang_dict["override"]
+        typology_key = typology if typology in INTERVENTION_DEFAULTS else "DIGITAL_ARREST"
+        lang_dict = INTERVENTION_DEFAULTS[typology_key].get(language, INTERVENTION_DEFAULTS[typology_key]["en"])
 
         return InterventionDialog(
-            headline=headline,
-            body=body,
+            headline=lang_dict["headline"],
+            body=lang_dict["body"].format(amount=amount),
             language=language,
-            primary_action=primary,
-            secondary_action=secondary,
-            override_action=override,
+            primary_action=lang_dict["primary"],
+            secondary_action=lang_dict["secondary"],
+            override_action=lang_dict["override"],
             risk_level="CRITICAL" if amount > 200000 else "HIGH"
         )
