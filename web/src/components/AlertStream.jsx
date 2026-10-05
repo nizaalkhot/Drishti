@@ -50,13 +50,33 @@ export default function AlertStream({ transactions, selectedTx, onSelectTx }) {
               >
                 {/* Upper line: ID, decision badge, latency */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '0.02em' }}>
                       {tx.transaction_id}
                     </span>
                     {isAllow && <span className="badge badge-allow">ALLOW</span>}
                     {isIntervene && <span className="badge badge-intervene">SCAM INTERVENTION</span>}
                     {isHold && <span className="badge badge-hold">HOLD</span>}
+                    {tx.consortium_reference && (
+                      <span style={{ fontSize: '9px', fontWeight: 800, padding: '1px 5px', borderRadius: '4px', background: 'rgba(239, 68, 68, 0.2)', color: '#f87171' }}>
+                        I4C MATCH
+                      </span>
+                    )}
+                    {tx.semantic_cache_hit && (
+                      <span style={{ fontSize: '9px', fontWeight: 800, padding: '1px 5px', borderRadius: '4px', background: 'rgba(16, 185, 129, 0.2)', color: '#34d399' }}>
+                        CACHE HIT
+                      </span>
+                    )}
+                    {tx.friction_tier === 'TIER_1_CHIP' && (
+                      <span style={{ fontSize: '9px', fontWeight: 800, padding: '1px 5px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24' }}>
+                        TIER 1 CHIP
+                      </span>
+                    )}
+                    {tx.friction_tier === 'HARD_BLOCK' && (
+                      <span style={{ fontSize: '9px', fontWeight: 800, padding: '1px 5px', borderRadius: '4px', background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }}>
+                        HARD BLOCK
+                      </span>
+                    )}
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', color: 'var(--text-dim)' }}>

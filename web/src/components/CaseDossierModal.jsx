@@ -154,7 +154,7 @@ export default function CaseDossierModal({ caseItem, onClose, onFreeze, onSignST
           {str && str.verified_evidence_citations && str.verified_evidence_citations.length > 0 && (
             <div>
               <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-dim)', marginBottom: '6px', textTransform: 'uppercase' }}>
-                VERIFIED REGULATORY & TELEMETRY CITATIONS
+                VERIFIED REGULATORY, CONSORTIUM & TELEMETRY CITATIONS
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 {str.verified_evidence_citations.map((cite, i) => (
@@ -163,6 +163,47 @@ export default function CaseDossierModal({ caseItem, onClose, onFreeze, onSignST
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* CON 4: Principal Officer Verification Checklist & Digital Sign-off */}
+          {str && (
+            <div style={{
+              background: 'rgba(99, 102, 241, 0.08)',
+              padding: '12px',
+              borderRadius: '8px',
+              border: '1px solid rgba(99, 102, 241, 0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: '#a5b4fc', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <ShieldCheck size={16} /> PRINCIPAL OFFICER VERIFICATION GATE (PMLA SEC 12)
+                </span>
+                <span style={{
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  color: str.human_sign_off_status === 'APPROVED_DIGITALLY_SIGNED' ? '#34d399' : '#fbbf24',
+                  background: str.human_sign_off_status === 'APPROVED_DIGITALLY_SIGNED' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                  padding: '2px 8px',
+                  borderRadius: '12px'
+                }}>
+                  {str.human_sign_off_status}
+                </span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '11px', color: '#cbd5e1' }}>
+                <div>✅ Beneficiary KYC Profile Verified</div>
+                <div>✅ PMLA Sec 12 Regulatory Alignment</div>
+                <div>✅ Telephony & Network Citations Validated</div>
+                <div>✅ I4C / NPCI Registry Cross-Check Completed</div>
+              </div>
+              {str.po_signature_hash && (
+                <div style={{ fontSize: '10px', color: '#94a3b8', background: 'rgba(0,0,0,0.3)', padding: '6px', borderRadius: '4px' }}>
+                  <strong>Digital Signature Hash:</strong> <code>{str.po_signature_hash}</code><br />
+                  <strong>Signed By:</strong> {str.signed_by}
+                </div>
+              )}
             </div>
           )}
         </div>

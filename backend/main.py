@@ -16,6 +16,10 @@ from agents.copilot import InvestigatorCopilot, CaseDossier, CaseStatus
 from agents.red_team import RedTeamAgent, AttackArchetype, DefenseGapReport
 from simulator.generator import UPISimulator, ScenarioType
 
+from backend.security.consent_vault import default_consent_vault, ConsentRequest, ConsentReceipt
+from backend.consortium.i4c_registry import default_i4c_registry
+from backend.cache.semantic_cache import default_semantic_cache
+
 # Request & Response Models
 class ScenarioInjectRequest(BaseModel):
     scenario: ScenarioType
@@ -36,6 +40,14 @@ class ScoringResponse(BaseModel):
     mule_graph_analysis: Optional[Dict[str, Any]] = None
     case_id: Optional[str] = None
     telemetry: Dict[str, Any]
+    # CON 1-6 response fields
+    friction_tier: str = "TIER_0_SILENT"
+    semantic_cache_hit: bool = False
+    tokens_saved: int = 0
+    consortium_reference: Optional[str] = None
+    cold_start_indicators: List[str] = Field(default_factory=list)
+    can_override: bool = True
+    telemetry_confidence: float = 1.0
 
 class FreezeRequest(BaseModel):
     reason: str = "Suspected Mule Aggregator Ring"
@@ -148,10 +160,23 @@ async def score_transaction(tx: Transaction, language: str = "en"):
     mule_data = None
     case_id = None
 
+    friction_tier = "TIER_0_SILENT"
+    semantic_cache_hit = False
+    tokens_saved = 0
+    consortium_ref = None
+    cold_start_inds = []
+    can_override = True
+
     # 3. Layer 2: Scam Shield (Grey Zone: 0.35 - 0.75)
     if l1_result.decision == RiskDecision.GREY_ZONE_SCAM_SHIELD:
         metrics_store["gemini_layer2_invocations"] += 1
         scam_decision = await scam_shield.evaluate(tx, features, language=language)
+        friction_tier = scam_decision.friction_tier
+        semantic_cache_hit = scam_decision.semantic_cache_hit
+        tokens_saved = scam_decision.tokens_saved
+        consortium_ref = scam_decision.consortium_reference or None
+        cold_start_inds = scam_decision.cold_start_indicators
+        can_override = (friction_tier != "HARD_BLOCK" and scam_decision.confidence_score <= 0.85)
 
         if scam_decision.is_scam_detected:
             decision_str = "INTERVENE"
@@ -173,6 +198,8 @@ async def score_transaction(tx: Transaction, language: str = "en"):
 
     elif l1_result.decision == RiskDecision.HOLD:
         decision_str = "HOLD"
+        friction_tier = "HARD_BLOCK"
+        can_override = False
         metrics_store["total_scams_prevented"] += 1
         metrics_store["loss_prevented_inr"] += tx.amount
         # Direct hold creates immediate high-priority case
@@ -180,7 +207,8 @@ async def score_transaction(tx: Transaction, language: str = "en"):
             is_scam_detected=True,
             scam_typology="CRITICAL_VELOCITY_OR_APK_HOLD",
             confidence_score=0.98,
-            reasoning_summary="Layer 1 critical risk score exceeded 0.75 threshold."
+            reasoning_summary="Layer 1 critical risk score exceeded 0.75 threshold.",
+            friction_tier="HARD_BLOCK"
         )
         case = copilot.create_case(tx, features, l1_result, dummy_scam)
         case_id = case.case_id
@@ -205,11 +233,20 @@ async def score_transaction(tx: Transaction, language: str = "en"):
         policy_citation=policy_citation,
         mule_graph_analysis=mule_data,
         case_id=case_id,
+        friction_tier=friction_tier,
+        semantic_cache_hit=semantic_cache_hit,
+        tokens_saved=tokens_saved,
+        consortium_reference=consortium_ref,
+        cold_start_indicators=cold_start_inds,
+        can_override=can_override,
+        telemetry_confidence=features.telemetry_confidence,
         telemetry={
             "is_call_active": tx.device.is_call_active,
             "call_duration_minutes": tx.device.call_duration_minutes,
             "accessibility_service_enabled": tx.device.accessibility_service_enabled,
             "remote_app_active": tx.device.remote_app_active,
+            "telemetry_source": tx.device.telemetry_source,
+            "telemetry_confidence": features.telemetry_confidence,
             "top_features": [f.model_dump() for f in l1_result.top_contributing_features]
         }
     )
@@ -286,6 +323,30 @@ async def get_roi_metrics():
         "p95_layer1_latency_ms": 11.8,
         "avg_layer2_latency_ms": 480.0
     }
+
+# CON 4: Cryptographic Informed Consent Vault Endpoints
+@app.post("/api/v1/consent/record", response_model=ConsentReceipt)
+async def record_customer_consent(req: ConsentRequest):
+    receipt = default_consent_vault.record_override_attempt(req)
+    await broadcast_event("CONSENT_OVERRIDE_RECORDED", receipt.model_dump(mode="json"))
+    return receipt
+
+@app.get("/api/v1/consent/ledger")
+async def get_consent_ledger(limit: int = 20):
+    return default_consent_vault.list_recent_receipts(limit=limit)
+
+# CON 5: I4C / NPCI Consortium Registry Lookup Endpoint
+@app.get("/api/v1/consortium/lookup")
+async def lookup_consortium(vpa: str, account: Optional[str] = None, device_id: Optional[str] = None):
+    match = default_i4c_registry.lookup(vpa, receiver_account=account, device_id=device_id)
+    if not match:
+        return {"matched": False, "details": None}
+    return {"matched": True, "details": match.model_dump(mode="json")}
+
+# CON 6: Semantic Cache Metrics Endpoint
+@app.get("/api/v1/cache/metrics")
+async def get_cache_metrics():
+    return default_semantic_cache.get_metrics()
 
 @app.get("/api/v1/stream")
 async def sse_stream(request: Request):

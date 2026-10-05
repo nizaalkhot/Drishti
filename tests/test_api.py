@@ -50,7 +50,7 @@ async def test_case_actions_and_roi():
         # Export STR
         str_resp = await ac.post(f"/api/v1/cases/{case_id}/export-str", json={"officer_name": "Compliance Head Desai"})
         assert str_resp.status_code == 200
-        assert str_resp.json()["human_sign_off_status"] == "APPROVED"
+        assert "APPROVED" in str_resp.json()["human_sign_off_status"]
 
         # ROI Metrics
         roi_resp = await ac.get("/api/v1/metrics/roi")

@@ -12,6 +12,10 @@ from backend.security.pii import PIITokenizer, TokenVault
 from agents.tools.mule_graph import default_mule_service, mule_graph_tool, MuleGraphAnalysis
 from agents.policy_agent import PolicyAgent, policy_search_tool, PolicyMatch
 from agents.intervention_agent import InterventionAgent, InterventionDialog
+from backend.cache.semantic_cache import default_semantic_cache
+from backend.engine.payee_memory import FrictionTier
+from backend.consortium.i4c_registry import default_i4c_registry
+from backend.engine.cold_start_mule import default_cold_start_scorer
 from agents.adk_config import get_adk_model, execute_adk_agent
 
 class ScamShieldDecision(BaseModel):
@@ -25,6 +29,12 @@ class ScamShieldDecision(BaseModel):
     masked_remark: str = ""
     latency_ms: float = 0.0
     fallback_applied: bool = False
+    # CON 1-6 fields
+    friction_tier: str = "TIER_0_SILENT"
+    semantic_cache_hit: bool = False
+    tokens_saved: int = 0
+    consortium_reference: str = ""
+    cold_start_indicators: List[str] = Field(default_factory=list)
 
 def create_adk_scam_shield_system():
     """
@@ -136,7 +146,7 @@ class ScamShieldOrchestrator:
         language: str
     ) -> ScamShieldDecision:
         # Context extraction
-        is_call_active = tx.device.is_call_active
+        is_call_active = tx.device.is_call_active or (features.is_call_active >= 0.5)
         call_mins = tx.device.call_duration_minutes
         is_first_payee = tx.is_first_time_payee
         apk_active = tx.device.accessibility_service_enabled or tx.device.remote_app_active
@@ -145,22 +155,47 @@ class ScamShieldOrchestrator:
         typology = "UNKNOWN"
         confidence = 0.50
         reasoning_points = []
+        cold_start_reasons = []
 
-        if apk_active:
+        # CON 5: I4C / NPCI Consortium Cross-Bank Check
+        consortium_match = default_i4c_registry.lookup(
+            receiver_vpa=tx.receiver_vpa,
+            receiver_account=tx.receiver_id,
+            device_id=tx.device.device_id
+        )
+        consortium_ref = ""
+        if consortium_match and consortium_match.is_active_block:
+            confidence = 0.96
+            consortium_ref = f"{consortium_match.ncrp_reference} ({consortium_match.reporting_banks_count} partner banks)"
+            typology = consortium_match.incident_category
+            reasoning_points.append(f"National I4C / NPCI Registry match: Flagged by {consortium_match.reporting_banks_count} banks for {consortium_match.incident_category} (Ref: {consortium_match.ncrp_reference}).")
+
+        # CON 3: Cold-start mule detection
+        cold_score, cold_reasons = default_cold_start_scorer.evaluate(tx)
+        if cold_score >= 0.40 and typology == "UNKNOWN":
+            typology = "COLD_START_MULE_BURST"
+            confidence = max(confidence, 0.78)
+            cold_start_reasons = cold_reasons
+            reasoning_points.extend(cold_reasons)
+
+        if apk_active and typology == "UNKNOWN":
             typology = "KYC_APK_TAKEOVER"
             confidence = 0.92
             reasoning_points.append("Device accessibility service or screen-sharing app active during transfer.")
-        elif is_call_active and call_mins >= 20.0 and any(kw in remark_lower for kw in ["cbi", "police", "court", "verification", "clearance", "rbi", "bail"]):
+        elif (is_call_active or features.behavioral_hesitation_flag) and (call_mins >= 15.0 or features.behavioral_hesitation_flag) and any(kw in remark_lower for kw in ["cbi", "police", "court", "verification", "clearance", "rbi", "bail"]):
             typology = "DIGITAL_ARREST"
             confidence = 0.95
-            reasoning_points.append(f"Victim engaged in continuous {call_mins:.0f}-minute phone call with coercive authority keywords.")
+            if tx.device.telemetry_source in ["ios_restricted", "web_sdk"]:
+                reasoning_points.append("Behavioral proxy detected coercive pacing & VPA clipboard urgency on iOS/web.")
+            else:
+                reasoning_points.append(f"Victim engaged in continuous {call_mins:.0f}-minute phone call with coercive authority keywords.")
             if is_first_payee:
                 reasoning_points.append("Large outbound transfer directed to an unverified first-time payee.")
-        elif any(kw in remark_lower for kw in ["vip", "crypto", "trading", "profit", "task"]):
+        elif any(kw in remark_lower for kw in ["vip", "crypto", "trading", "profit", "task"]) and typology == "UNKNOWN":
             typology = "HIGH_YIELD_INVESTMENT"
             confidence = 0.88
             reasoning_points.append("Narration indicates unauthorized investment/task group manipulation.")
-        elif features.amount_to_avg_ratio > 30.0 and is_first_payee:
+        elif features.amount_to_avg_ratio > 30.0 and is_first_payee and typology == "UNKNOWN":
             typology = "SUSPICIOUS_HIGH_VALUE_FIRST_TIME"
             confidence = 0.72
             reasoning_points.append(f"Amount is {features.amount_to_avg_ratio:.0f}x baseline average sent to first-time beneficiary.")
@@ -176,20 +211,46 @@ class ScamShieldOrchestrator:
             confidence = min(confidence + 0.15, 0.99)
             reasoning_points.append(f"Beneficiary graph: {mule_analysis.summary}")
 
-        is_scam = typology != "UNKNOWN" or confidence >= 0.70
+        # CON 2: Suppress scam flag if Payee is highly trusted (e.g. Hospital or Family)
+        if features.trusted_payee_score >= 0.70 and not consortium_match and not apk_active:
+            confidence = max(0.15, confidence - 0.40)
+            reasoning_points.append(f"Verified Trusted Payee (trust score: {features.trusted_payee_score:.2f}) mitigating false-positive coercion flag.")
+
+        is_scam = (typology != "UNKNOWN" and confidence >= 0.60) or confidence >= 0.70
 
         # Real Policy Tool Execution
         policy = self.policy_agent.retrieve_guidelines(typology, tx.remark)
         policy_citation = f"{policy.title} ({policy.circular_ref}): {policy.clause}" if policy else ""
 
-        # Real Contextual Intervention Generation
+        # CON 6: Semantic Intervention Cache Lookup & Generation
         intervention = None
+        semantic_cache_hit = False
+        tokens_saved = 0
+
         if is_scam:
-            intervention = self.intervention_agent.generate_intervention(
-                typology=typology,
-                amount=tx.amount,
-                language=language
-            )
+            cached_result = default_semantic_cache.lookup(typology, language)
+            if cached_result:
+                intervention, _ = cached_result
+                semantic_cache_hit = True
+                tokens_saved = 450
+            else:
+                intervention = self.intervention_agent.generate_intervention(
+                    typology=typology,
+                    amount=tx.amount,
+                    language=language
+                )
+                default_semantic_cache.store(typology, language, intervention)
+
+        # CON 2 & 4: Multi-Grade Friction Ladder Calculation
+        if not is_scam:
+            friction_tier = FrictionTier.TIER_0_SILENT
+        elif confidence > 0.85:
+            # Overrides prohibited under RBI consumer protection guidelines
+            friction_tier = FrictionTier.HARD_BLOCK
+        elif features.trusted_payee_score >= 0.50:
+            friction_tier = FrictionTier.TIER_1_CHIP
+        else:
+            friction_tier = FrictionTier.TIER_2_QUIZ
 
         return ScamShieldDecision(
             is_scam_detected=is_scam,
@@ -200,5 +261,10 @@ class ScamShieldOrchestrator:
             policy_citation=policy_citation,
             mule_graph_analysis=mule_analysis,
             masked_remark=masked_remark,
-            fallback_applied=False
+            fallback_applied=False,
+            friction_tier=friction_tier.value,
+            semantic_cache_hit=semantic_cache_hit,
+            tokens_saved=tokens_saved,
+            consortium_reference=consortium_ref,
+            cold_start_indicators=cold_start_reasons
         )

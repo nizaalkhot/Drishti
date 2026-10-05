@@ -68,11 +68,13 @@ def run_ui_e2e_test():
         assert "FIU-IND COMPLIANT STR DRAFT" in page.inner_text("body")
 
         # Step 6: Perform Human Actions (Freeze & Sign)
-        print("6. Executing Human Freeze and STR Approval...")
+        print("6. Executing Human Freeze and STR Approval with Principal Officer Gate...")
+        assert "PRINCIPAL OFFICER VERIFICATION GATE" in page.inner_text("body")
         page.click("button:has-text('Mark Lien & Freeze Account')")
         time.sleep(1)
         page.click("button:has-text('Sign & Export FIU-IND STR')")
         time.sleep(1)
+        assert "APPROVED_DIGITALLY_SIGNED" in page.inner_text("body")
         page.screenshot(path=os.path.join(ARTIFACT_DIR, "06_str_filed.png"))
         print("   Saved: 06_str_filed.png")
 
@@ -80,8 +82,29 @@ def run_ui_e2e_test():
         page.click("button:has-text('✕')")
         time.sleep(1)
 
-        # Step 7: Red-Team Lab
-        print("7. Testing Red-Team Lab Arena...")
+        # Step 7: Test Hospital Emergency (CON 2 Tier 1 Chip, No False Positive Block)
+        print("7. Testing Hospital Emergency Scenario (CON 2 Tier 1 Chip)...")
+        page.click("button:has-text('Command Center')")
+        time.sleep(1)
+        select_el = page.locator("select")
+        select_el.select_option("LEGITIMATE_HOSPITAL_EMERGENCY")
+        time.sleep(2)
+        body_text = page.inner_text("body")
+        assert "Advisory Notice (Tier 1)" in body_text or "Payment Approved" in body_text
+        page.screenshot(path=os.path.join(ARTIFACT_DIR, "09_hospital_emergency_tier1.png"))
+        print("   Saved: 09_hospital_emergency_tier1.png")
+
+        # Step 8: Test High Coercion Override Attempt (CON 4 Hard Block)
+        print("8. Testing High Coercion Override (CON 4 Safety Hard Block)...")
+        select_el.select_option("OVERRIDE_ATTEMPT_HIGH_COERCION")
+        time.sleep(2)
+        body_text = page.inner_text("body")
+        assert "SAFETY HARD BLOCK" in body_text or "Customer Override Prohibited" in body_text
+        page.screenshot(path=os.path.join(ARTIFACT_DIR, "10_hard_block_protection.png"))
+        print("   Saved: 10_hard_block_protection.png")
+
+        # Step 9: Red-Team Lab
+        print("9. Testing Red-Team Lab Arena...")
         page.click("button:has-text('Red-Team Lab')")
         time.sleep(1.5)
         page.click("button:has-text('Launch Adversarial Probe against Drishti')")
@@ -90,8 +113,8 @@ def run_ui_e2e_test():
         page.screenshot(path=os.path.join(ARTIFACT_DIR, "07_red_team_gap_report.png"))
         print("   Saved: 07_red_team_gap_report.png")
 
-        # Step 8: Executive ROI
-        print("8. Testing Executive ROI Dashboard...")
+        # Step 10: Executive ROI
+        print("10. Testing Executive ROI Dashboard...")
         page.click("button:has-text('Executive ROI')")
         time.sleep(1.5)
         page.screenshot(path=os.path.join(ARTIFACT_DIR, "08_executive_roi.png"))
@@ -99,7 +122,7 @@ def run_ui_e2e_test():
         assert "TOTAL LOSS PREVENTED" in page.inner_text("body")
 
         browser.close()
-        print("\nAll End-to-End UI Tests PASSED successfully!")
+        print("\nAll End-to-End UI Tests (including CON 1-6 enhancements) PASSED successfully!")
 
 if __name__ == "__main__":
     run_ui_e2e_test()

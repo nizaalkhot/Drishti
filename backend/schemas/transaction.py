@@ -10,6 +10,12 @@ class DeviceSignals(BaseModel):
     accessibility_service_enabled: bool = Field(False, description="Android accessibility service active (APK indicator)")
     remote_app_active: bool = Field(False, description="Screen-sharing or remote desktop tool running")
     is_new_device: bool = Field(False, description="Device seen for the first time for this customer")
+    # CON 1: Telemetry degradation & proxy fields
+    telemetry_source: str = Field("android_native", description="Source OS/client: android_native, ios_restricted, web_sdk, whatsapp_pay_proxy")
+    telemetry_confidence: float = Field(1.0, ge=0.0, le=1.0, description="Confidence in client telemetry completeness")
+    clipboard_paste_cadence_ms: Optional[int] = Field(None, description="Latency between entering screen and VPA paste (ms)")
+    hesitation_duration_seconds: Optional[float] = Field(None, description="Hesitation/idle duration on payment screen (seconds)")
+    savings_liquidation_burst: bool = Field(False, description="Sudden liquidation from FD/savings into current account immediately prior")
 
 class Transaction(BaseModel):
     id: str = Field(..., description="Unique transaction ID")
@@ -25,6 +31,13 @@ class Transaction(BaseModel):
     device: DeviceSignals = Field(..., description="Device and telephonic signals")
     is_first_time_payee: bool = Field(True, description="Whether beneficiary has never received funds before")
     customer_avg_tx_amount: float = Field(2000.0, description="Customer 30-day baseline average transaction amount")
+    # CON 2: Trusted Payee Memory fields
+    is_payee_in_customer_contacts: bool = Field(False, description="Whether receiver is in customer device address book")
+    prior_successful_transfers_count: int = Field(0, description="Number of historical successful transfers to this payee")
+    # CON 3: Cold-start mule detection fields
+    receiver_account_age_days: int = Field(180, description="Age of receiver bank account in days")
+    receiver_kyc_tier: str = Field("REGULAR", description="Beneficiary KYC profile: REGULAR, STUDENT, NO_INCOME, COMMERCIAL")
+    receiver_vpa_binding_age_hours: float = Field(720.0, description="Hours since receiver VPA was bound to SIM/hardware")
 
 class FeatureVector(BaseModel):
     velocity_1h_count: int = 0
@@ -37,3 +50,10 @@ class FeatureVector(BaseModel):
     device_changed_recently: float = 0.0
     malicious_app_flag: float = 0.0
     high_risk_remark_flag: float = 0.0
+    # CON 1-6 features
+    telemetry_confidence: float = 1.0
+    behavioral_hesitation_flag: float = 0.0
+    savings_liquidation_flag: float = 0.0
+    receiver_cold_start_anomaly: float = 0.0
+    trusted_payee_score: float = 0.0
+    consortium_blacklisted_flag: float = 0.0

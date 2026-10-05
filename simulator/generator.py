@@ -11,6 +11,12 @@ class ScenarioType(str, Enum):
     MULE_AGGREGATOR_FAN_IN = "MULE_AGGREGATOR_FAN_IN"
     HIGH_YIELD_INVESTMENT = "HIGH_YIELD_INVESTMENT"
     LEGITIMATE = "LEGITIMATE"
+    # CON 1-6 Test Scenarios
+    LEGITIMATE_HOSPITAL_EMERGENCY = "LEGITIMATE_HOSPITAL_EMERGENCY"
+    IOS_RESTRICTED_DIGITAL_ARREST = "IOS_RESTRICTED_DIGITAL_ARREST"
+    FRESH_STUDENT_MULE_COLD_START = "FRESH_STUDENT_MULE_COLD_START"
+    I4C_CONSORTIUM_SYNDICATE = "I4C_CONSORTIUM_SYNDICATE"
+    OVERRIDE_ATTEMPT_HIGH_COERCION = "OVERRIDE_ATTEMPT_HIGH_COERCION"
 
 VICTIM_NAMES = [
     ("Arun Joshi", "arun.joshi@okaxis", "SBI"),
@@ -167,6 +173,141 @@ class UPISimulator:
                 ),
                 is_first_time_payee=True,
                 customer_avg_tx_amount=1500.0
+            )
+
+        elif scenario_type == ScenarioType.LEGITIMATE_HOSPITAL_EMERGENCY:
+            return Transaction(
+                id=tx_id,
+                timestamp=datetime.now(timezone.utc),
+                sender_id="cust_9821_mum",
+                sender_vpa="arun.joshi@okaxis",
+                sender_account="982100019283",
+                receiver_id="apollo.hospital@icici",
+                receiver_vpa="apollo.hospital@icici",
+                receiver_ifsc="ICIC0000001",
+                amount=250000.0,
+                remark="Emergency ICU admission deposit - Dad",
+                device=DeviceSignals(
+                    device_id="DEV-CUSTOMER-PRIMARY",
+                    ip_address="122.161.45.12",
+                    is_call_active=True,
+                    call_duration_minutes=35.0,  # Legitimate active call with spouse/relative
+                    accessibility_service_enabled=False,
+                    remote_app_active=False,
+                    is_new_device=False
+                ),
+                is_first_time_payee=False,
+                customer_avg_tx_amount=5000.0,
+                is_payee_in_customer_contacts=True,
+                prior_successful_transfers_count=3
+            )
+
+        elif scenario_type == ScenarioType.IOS_RESTRICTED_DIGITAL_ARREST:
+            return Transaction(
+                id=tx_id,
+                timestamp=datetime.now(timezone.utc),
+                sender_id=f"CUST-{abs(hash(victim[0])) % 9000 + 1000}",
+                sender_vpa=victim[1],
+                sender_account=f"{random.randint(10000000000, 99999999999)}",
+                receiver_id="MULE-ARREST-IOS-99",
+                receiver_vpa="cbi.verification.pool@paytm",
+                receiver_ifsc="PYTM0123456",
+                amount=385000.0,
+                remark="CBI clearance and digital bail deposit",
+                device=DeviceSignals(
+                    device_id="DEV-IPHONE-15-PRO",
+                    ip_address="103.21.55.99",
+                    is_call_active=False,  # Blocked by iOS sandbox!
+                    call_duration_minutes=0.0,
+                    accessibility_service_enabled=False,
+                    remote_app_active=False,
+                    is_new_device=False,
+                    telemetry_source="ios_restricted",
+                    telemetry_confidence=0.30,
+                    clipboard_paste_cadence_ms=750,  # Coerced quick paste
+                    hesitation_duration_seconds=55.0,  # Coached hesitation
+                    savings_liquidation_burst=True  # Liquidated FD prior
+                ),
+                is_first_time_payee=True,
+                customer_avg_tx_amount=3000.0
+            )
+
+        elif scenario_type == ScenarioType.FRESH_STUDENT_MULE_COLD_START:
+            return Transaction(
+                id=tx_id,
+                timestamp=datetime.now(timezone.utc),
+                sender_id=f"CUST-{abs(hash(victim[0])) % 9000 + 1000}",
+                sender_vpa=victim[1],
+                sender_account=f"{random.randint(10000000000, 99999999999)}",
+                receiver_id="FRESH-STUDENT-MULE-KOTAK",
+                receiver_vpa="rahul.mule99@kotak",
+                receiver_ifsc="KKBK0001928",
+                amount=78000.0,
+                remark="Crypto trading investment refund",
+                device=DeviceSignals(
+                    device_id="DEV-VICTIM-ANDROID",
+                    ip_address="49.36.12.8",
+                    is_call_active=False,
+                    call_duration_minutes=0.0,
+                    accessibility_service_enabled=False,
+                    remote_app_active=False,
+                    is_new_device=False
+                ),
+                is_first_time_payee=True,
+                customer_avg_tx_amount=2000.0,
+                receiver_account_age_days=3,  # Opened 3 days ago!
+                receiver_kyc_tier="STUDENT",  # Student KYC receiving large corporate sum!
+                receiver_vpa_binding_age_hours=14.0  # VPA registered 14 hours ago
+            )
+
+        elif scenario_type == ScenarioType.I4C_CONSORTIUM_SYNDICATE:
+            return Transaction(
+                id=tx_id,
+                timestamp=datetime.now(timezone.utc),
+                sender_id=f"CUST-{abs(hash(victim[0])) % 9000 + 1000}",
+                sender_vpa=victim[1],
+                sender_account=f"{random.randint(10000000000, 99999999999)}",
+                receiver_id="I4C-SYNDICATE-NODE-1",
+                receiver_vpa="sbi.safety.officer@ybl",  # Pre-seeded in I4C registry
+                receiver_ifsc="YESB0004321",
+                amount=120000.0,
+                remark="Police security audit clearance",
+                device=DeviceSignals(
+                    device_id="DEV-VICTIM-MOBILE",
+                    ip_address="14.139.12.5",
+                    is_call_active=True,
+                    call_duration_minutes=18.0,
+                    accessibility_service_enabled=False,
+                    remote_app_active=False,
+                    is_new_device=False
+                ),
+                is_first_time_payee=True,
+                customer_avg_tx_amount=2500.0
+            )
+
+        elif scenario_type == ScenarioType.OVERRIDE_ATTEMPT_HIGH_COERCION:
+            return Transaction(
+                id=tx_id,
+                timestamp=datetime.now(timezone.utc),
+                sender_id="cust_victim_high_coercion",
+                sender_vpa="victim.elderly@okhdfcbank",
+                sender_account="501002938192",
+                receiver_id="CBI-EXTORTION-MULE",
+                receiver_vpa="customs.clearance.dept@paytm",
+                receiver_ifsc="PYTM0123456",
+                amount=490000.0,
+                remark="Supreme Court verification fee ref SC/2026/89",
+                device=DeviceSignals(
+                    device_id="DEV-SHARED-MULE-PHONE-01",
+                    ip_address="103.45.12.9",
+                    is_call_active=True,
+                    call_duration_minutes=68.0,
+                    accessibility_service_enabled=True,
+                    remote_app_active=True,
+                    is_new_device=False
+                ),
+                is_first_time_payee=True,
+                customer_avg_tx_amount=2000.0
             )
 
         else: # ScenarioType.LEGITIMATE

@@ -163,9 +163,19 @@ export default function App() {
       body: JSON.stringify({ officer_name: "Principal Officer Sharma (AML)" })
     });
     if (res.ok) {
+      const data = await res.json();
       refreshData();
       if (selectedCase) {
-        setSelectedCase(prev => ({ ...prev, status: 'STR_FILED' }));
+        setSelectedCase(prev => ({
+          ...prev,
+          status: 'STR_FILED',
+          str_report: prev.str_report ? {
+            ...prev.str_report,
+            human_sign_off_status: data.human_sign_off_status || 'APPROVED_DIGITALLY_SIGNED',
+            signed_by: data.signed_by,
+            po_signature_hash: data.signature_hash
+          } : prev.str_report
+        }));
       }
     }
   };

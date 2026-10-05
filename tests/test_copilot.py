@@ -58,4 +58,5 @@ async def test_investigator_copilot_case_workflow():
 
     # 4. Action: Sign & Approve STR
     signed = copilot.sign_and_export_str(case.case_id, officer_name="Compliance Officer Sharma")
-    assert signed["human_sign_off_status"] == "APPROVED"
+    assert "APPROVED" in signed["human_sign_off_status"]
+    assert "signature_hash" in signed

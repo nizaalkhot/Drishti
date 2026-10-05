@@ -119,8 +119,28 @@ export default function Navbar({ activeTab, setActiveTab, onInjectScenario, isIn
             <option value="KYC_APK_TAKEOVER">📱 Fake KYC APK / Screen Share Hijack</option>
             <option value="MULE_AGGREGATOR_FAN_IN">🕸️ Mule Aggregator Fan-In Ring</option>
             <option value="HIGH_YIELD_INVESTMENT">📈 Fake VIP Stock Trading Scam</option>
+            <option value="LEGITIMATE_HOSPITAL_EMERGENCY">🏥 CON 2: Hospital Emergency (Trusted Payee)</option>
+            <option value="IOS_RESTRICTED_DIGITAL_ARREST">🍏 CON 1: iOS Restricted (Behavioral Proxy)</option>
+            <option value="FRESH_STUDENT_MULE_COLD_START">🎓 CON 3: Fresh Student Mule (Cold-Start)</option>
+            <option value="I4C_CONSORTIUM_SYNDICATE">🏛️ CON 5: I4C Multi-Bank Registry Match</option>
+            <option value="OVERRIDE_ATTEMPT_HIGH_COERCION">🔒 CON 4: Coercion Override (Hard Block)</option>
             <option value="LEGITIMATE">✅ Legitimate Normal UPI Payment</option>
           </select>
+        </div>
+
+        {/* I4C Consortium & Semantic Cache Pill */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          padding: '4px 10px',
+          borderRadius: '20px',
+          background: 'rgba(99, 102, 241, 0.1)',
+          border: '1px solid rgba(99, 102, 241, 0.25)'
+        }}>
+          <span style={{ fontSize: '10px', fontWeight: 700, color: '#a5b4fc' }}>
+            I4C SYNC • SEMANTIC CACHE ON
+          </span>
         </div>
 
         {/* Live SSE Pulse */}

@@ -37,6 +37,11 @@ class TabularRiskScorer:
         "device_changed_recently": 0.10,
         "amount_ratio_normalized": 0.14,
         "velocity_1h_count_normalized": 0.14,
+        # CON 1, 3, 5 features
+        "consortium_blacklisted_flag": 0.35,
+        "receiver_cold_start_anomaly": 0.22,
+        "savings_liquidation_flag": 0.12,
+        "behavioral_hesitation_flag": 0.08,
     }
 
     def score(self, features: FeatureVector) -> RiskScoreResult:
@@ -54,6 +59,10 @@ class TabularRiskScorer:
             "device_changed_recently": features.device_changed_recently,
             "amount_ratio_normalized": amt_norm,
             "velocity_1h_count_normalized": vel_norm,
+            "consortium_blacklisted_flag": features.consortium_blacklisted_flag,
+            "receiver_cold_start_anomaly": features.receiver_cold_start_anomaly,
+            "savings_liquidation_flag": features.savings_liquidation_flag,
+            "behavioral_hesitation_flag": features.behavioral_hesitation_flag,
         }
 
         contributions: List[FeatureContribution] = []
@@ -71,8 +80,19 @@ class TabularRiskScorer:
                     contribution=round(contrib, 3)
                 ))
 
-        # Sort by highest contribution
-        contributions.sort(key=lambda x: x.contribution, reverse=True)
+        # CON 2: Deduct risk for verified trusted payees (suppresses false positives)
+        if features.trusted_payee_score > 0.0:
+            trust_deduction = features.trusted_payee_score * 0.30
+            raw_score = max(raw_score - trust_deduction, 0.02)
+            contributions.append(FeatureContribution(
+                feature="trusted_payee_mitigation",
+                value=round(features.trusted_payee_score, 2),
+                weight=-0.30,
+                contribution=round(-trust_deduction, 3)
+            ))
+
+        # Sort by absolute contribution impact
+        contributions.sort(key=lambda x: abs(x.contribution), reverse=True)
 
         # Baseline offset for normal transactions
         final_score = min(max(raw_score, 0.02), 0.99)

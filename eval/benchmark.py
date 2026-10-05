@@ -27,7 +27,11 @@ async def run_evaluation_benchmark(num_scenarios_per_type: int = 20) -> Dict[str
         (ScenarioType.KYC_APK_TAKEOVER, True),
         (ScenarioType.HIGH_YIELD_INVESTMENT, True),
         (ScenarioType.MULE_AGGREGATOR_FAN_IN, True),
-        (ScenarioType.LEGITIMATE, False)
+        (ScenarioType.IOS_RESTRICTED_DIGITAL_ARREST, True),
+        (ScenarioType.FRESH_STUDENT_MULE_COLD_START, True),
+        (ScenarioType.I4C_CONSORTIUM_SYNDICATE, True),
+        (ScenarioType.LEGITIMATE, False),
+        (ScenarioType.LEGITIMATE_HOSPITAL_EMERGENCY, False)
     ]
 
     for stype, is_scam in scenarios:
