@@ -100,44 +100,47 @@ export default function PhoneSimulator({ currentTransaction, onSendPayment, isPr
           {/* Active Call Floating Banner */}
           {isCallActive && (
             <div style={{
-              background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(185, 28, 28, 0.95) 100%)',
+              background: 'linear-gradient(135deg, rgba(220, 38, 38, 0.96) 0%, rgba(185, 28, 28, 0.96) 100%)',
               color: '#ffffff',
-              padding: '28px 12px 8px 12px',
+              padding: '28px 14px 10px 14px',
               fontSize: '11px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              boxShadow: '0 4px 12px rgba(239, 68, 68, 0.4)',
+              boxShadow: '0 6px 16px rgba(220, 38, 38, 0.45)',
               zIndex: 40
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{
-                  width: '24px',
-                  height: '24px',
+                  width: '26px',
+                  height: '26px',
                   borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.2)',
+                  background: 'rgba(255, 255, 255, 0.22)',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  boxShadow: '0 0 10px rgba(255, 255, 255, 0.3)'
                 }}>
-                  <PhoneCall size={12} className="animate-pulse-slow" />
+                  <PhoneCall size={13} className="animate-pulse-slow" />
                 </div>
                 <div>
-                  <div style={{ fontWeight: 700, letterSpacing: '0.02em' }}>IN-CALL: +91 98210 44821</div>
-                  <div style={{ fontSize: '9px', opacity: 0.9 }}>Active: {callDuration}m • Remote Voice Channel</div>
+                  <div style={{ fontWeight: 800, letterSpacing: '0.03em' }} className="font-mono">
+                    IN-CALL: +91 98210 44821
+                  </div>
+                  <div style={{ fontSize: '9px', opacity: 0.9 }}>Active: {callDuration}m • Remote Audio Link</div>
                 </div>
               </div>
 
               {/* Pulsing Audio Equalizer */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '2px', height: '14px' }}>
-                {[6, 12, 18, 10, 16, 8].map((h, i) => (
+                {[6, 14, 20, 10, 18, 8].map((h, i) => (
                   <span
                     key={i}
                     style={{
-                      width: '2px',
+                      width: '2.5px',
                       height: `${h}px`,
                       background: '#ffffff',
-                      borderRadius: '1px',
+                      borderRadius: '2px',
                       animation: 'call-wave 0.8s infinite ease-in-out',
                       animationDelay: `${i * 0.12}s`
                     }}
@@ -150,35 +153,40 @@ export default function PhoneSimulator({ currentTransaction, onSendPayment, isPr
           {/* UPI Banking App Top Header */}
           <div style={{
             padding: isCallActive ? '10px 14px' : '34px 14px 10px',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: 'rgba(15, 23, 42, 0.6)'
+            background: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(10px)'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <div style={{ width: '18px', height: '18px', borderRadius: '4px', background: '#e11d48', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 900 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+              <div style={{ width: '20px', height: '20px', borderRadius: '5px', background: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 900, color: '#fff' }}>
                 ▲
               </div>
-              <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '-0.01em' }}>Axis Mobile Pay</span>
+              <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '-0.01em' }} className="font-display">
+                Axis Mobile Pay
+              </span>
             </div>
 
             {/* Language Picker */}
-            <div style={{ display: 'flex', gap: '3px' }}>
+            <div style={{ display: 'flex', gap: '4px' }}>
               {['en', 'hi', 'mr'].map((lang) => (
                 <button
                   key={lang}
                   type="button"
                   onClick={() => setLanguage(lang)}
                   style={{
-                    padding: '2px 5px',
-                    fontSize: '9px',
-                    borderRadius: '4px',
+                    padding: '3px 7px',
+                    fontSize: '10px',
+                    borderRadius: '5px',
                     border: 'none',
                     fontWeight: 700,
                     cursor: 'pointer',
-                    background: language === lang ? 'var(--accent-indigo)' : 'rgba(255,255,255,0.06)',
-                    color: language === lang ? '#ffffff' : 'var(--text-muted)'
+                    transition: 'all 0.15s ease',
+                    background: language === lang ? 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)' : 'rgba(255, 255, 255, 0.06)',
+                    color: language === lang ? '#ffffff' : 'var(--text-muted)',
+                    boxShadow: language === lang ? '0 2px 6px rgba(99, 102, 241, 0.4)' : 'none'
                   }}
                 >
                   {lang === 'en' ? 'EN' : lang === 'hi' ? 'हिंदी' : 'मराठी'}

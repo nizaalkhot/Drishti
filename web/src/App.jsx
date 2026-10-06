@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import './App.css';
 import Navbar from './components/Navbar';
 import PhoneSimulator from './components/PhoneSimulator';
 import AlertStream from './components/AlertStream';
@@ -195,7 +196,7 @@ export default function App() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="app-container">
       {/* Top Navigation */}
       <Navbar
         activeTab={activeTab}
@@ -206,22 +207,14 @@ export default function App() {
       />
 
       {/* Main Split-Screen Workspace */}
-      <main style={{
-        flex: 1,
-        padding: '20px 24px',
-        display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1fr) 380px',
-        gap: '24px',
-        maxWidth: '1800px',
-        width: '100%',
-        margin: '0 auto'
-      }}>
+      <main className="main-workspace">
         {/* Left Side: Bank Operations Command Center */}
-        <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 110px)' }}>
+        <div className="command-column">
           {activeTab === 'command' && (
             <AlertStream
               transactions={transactions}
               selectedTx={selectedTx}
+              onInjectScenario={handleInjectScenario}
               onSelectTx={(tx) => {
                 setSelectedTx(tx);
                 if (tx.case_id) {
@@ -253,7 +246,7 @@ export default function App() {
         </div>
 
         {/* Right Side: Interactive Customer Mobile UPI Simulator */}
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div className="simulator-column">
           <PhoneSimulator
             currentTransaction={selectedTx}
             onSendPayment={handleSendPayment}
