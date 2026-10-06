@@ -27,7 +27,9 @@ wheels/
 # Video & Media Recordings
 *.mp4
 *.webm
+!brag-output/*.mp4
 video_temp/
+brag-output/work/
 env.bak/
 venv.bak/
 
