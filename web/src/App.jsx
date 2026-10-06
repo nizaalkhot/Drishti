@@ -23,12 +23,27 @@ export default function App() {
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const [language, setLanguage] = useState('en');
 
-  // Load Initial Cases and ROI Metrics
+  // Idempotent Transaction Updater to eliminate race-condition duplicates
+  const upsertTransaction = (newTx) => {
+    if (!newTx || !newTx.transaction_id) return;
+    setTransactions(prev => {
+      const idx = prev.findIndex(t => t.transaction_id === newTx.transaction_id);
+      if (idx !== -1) {
+        const next = [...prev];
+        next[idx] = { ...next[idx], ...newTx };
+        return next;
+      }
+      return [newTx, ...prev.slice(0, 49)];
+    });
+  };
+
+  // Load Initial Cases, ROI Metrics, and Recent Ingested Transactions
   const refreshData = async () => {
     try {
-      const [casesRes, metricsRes] = await Promise.all([
+      const [casesRes, metricsRes, txsRes] = await Promise.all([
         fetch(`${API_BASE}/api/v1/cases`),
-        fetch(`${API_BASE}/api/v1/metrics/roi`)
+        fetch(`${API_BASE}/api/v1/metrics/roi`),
+        fetch(`${API_BASE}/api/v1/transactions/recent`)
       ]);
       if (casesRes.ok) {
         const casesData = await casesRes.json();
@@ -37,6 +52,18 @@ export default function App() {
       if (metricsRes.ok) {
         const metricsData = await metricsRes.json();
         setMetrics(metricsData);
+      }
+      if (txsRes.ok) {
+        const txsData = await txsRes.json();
+        if (Array.isArray(txsData) && txsData.length > 0) {
+          setTransactions(prev => {
+            if (prev.length === 0) return txsData.slice(0, 50);
+            const seen = new Set(prev.map(t => t.transaction_id));
+            const newFromApi = txsData.filter(t => !seen.has(t.transaction_id));
+            return [...prev, ...newFromApi].slice(0, 50);
+          });
+          setSelectedTx(prev => prev || txsData[0]);
+        }
       }
     } catch (e) {
       console.warn("Backend not yet active or offline:", e);
@@ -55,7 +82,7 @@ export default function App() {
         try {
           const parsed = JSON.parse(event.data);
           if (parsed.type === 'TRANSACTION_SCORED') {
-            setTransactions(prev => [parsed.data, ...prev.slice(0, 49)]);
+            upsertTransaction(parsed.data);
             setSelectedTx(parsed.data);
             refreshData();
           } else if (parsed.type === 'ACCOUNT_FROZEN' || parsed.type === 'STR_APPROVED' || parsed.type === 'CASE_DISMISSED') {
@@ -88,11 +115,11 @@ export default function App() {
       });
       const data = await res.json();
       setSelectedTx(data);
-      setTransactions(prev => [data, ...prev.slice(0, 49)]);
+      upsertTransaction(data);
       refreshData();
     } catch (e) {
       console.error(e);
-      alert("Failed to inject scenario. Ensure Drishti backend is running at http://localhost:8000");
+      alert(`Failed to inject scenario. Ensure Drishti backend is running at ${API_BASE}`);
     } finally {
       setIsInjecting(false);
     }
@@ -132,11 +159,11 @@ export default function App() {
       });
       const data = await res.json();
       setSelectedTx(data);
-      setTransactions(prev => [data, ...prev.slice(0, 49)]);
+      upsertTransaction(data);
       refreshData();
     } catch (e) {
       console.error(e);
-      alert("Failed to score transaction. Ensure backend is running at http://localhost:8000");
+      alert(`Failed to score transaction. Ensure backend is running at ${API_BASE}`);
     } finally {
       setIsProcessing(false);
     }

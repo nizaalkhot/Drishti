@@ -2,6 +2,7 @@
 import time
 import json
 import asyncio
+from typing import List
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 
@@ -20,6 +21,7 @@ from backend.api.deps import (
     broadcast_event,
     pubsub_service,
     bq_export,
+    recent_transactions,
 )
 
 router = APIRouter(tags=["Scoring & Simulation"])
@@ -135,6 +137,15 @@ async def score_transaction(tx: Transaction, language: str = "en"):
 
     resp_dict = response.model_dump()
 
+    # Update in-memory ring buffer (idempotent deduplication by transaction_id, max 50 items)
+    existing_idx = next((i for i, item in enumerate(recent_transactions) if item.get("transaction_id") == response.transaction_id), None)
+    if existing_idx is not None:
+        recent_transactions[existing_idx] = resp_dict
+    else:
+        recent_transactions.insert(0, resp_dict)
+        if len(recent_transactions) > 50:
+            recent_transactions.pop()
+
     # Broadcast event to SSE clients
     asyncio.create_task(broadcast_event("TRANSACTION_SCORED", resp_dict))
 
@@ -155,6 +166,11 @@ async def score_transaction(tx: Transaction, language: str = "en"):
         pass
 
     return response
+
+@router.get("/api/v1/transactions/recent", response_model=List[ScoringResponse])
+async def get_recent_transactions():
+    """Retrieve recent transactions from the ring buffer for real-time stream hydration."""
+    return recent_transactions
 
 @router.post("/api/v1/simulator/inject", response_model=ScoringResponse)
 async def inject_scenario(req: ScenarioInjectRequest):

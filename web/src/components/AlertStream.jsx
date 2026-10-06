@@ -122,7 +122,7 @@ export default function AlertStream({ transactions, selectedTx, onSelectTx }) {
             </div>
           </div>
         ) : (
-          transactions.map((tx) => {
+          transactions.map((tx, idx) => {
             const isSelected = selectedTx && selectedTx.transaction_id === tx.transaction_id;
             const isIntervene = tx.decision === 'INTERVENE';
             const isHold = tx.decision === 'HOLD';
@@ -130,7 +130,7 @@ export default function AlertStream({ transactions, selectedTx, onSelectTx }) {
 
             return (
               <div
-                key={tx.transaction_id}
+                key={tx.transaction_id || `tx-${idx}`}
                 onClick={() => onSelectTx(tx)}
                 className="interactive-card"
                 style={{

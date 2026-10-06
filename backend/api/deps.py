@@ -51,3 +51,6 @@ metrics_store: Dict[str, Any] = {
     "investigator_hours_saved": 0.0,
     "gemini_layer2_invocations": 0
 }
+
+# In-Memory Ring Buffer for Recent Stream Hydration (max 50)
+recent_transactions: List[Dict[str, Any]] = []
