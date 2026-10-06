@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart3, TrendingUp, ShieldCheck, Clock, Layers, Zap, CheckCircle2 } from 'lucide-react';
+import { BarChart3, TrendingUp, ShieldCheck, Clock, Layers, Zap } from 'lucide-react';
 
 export default function RoiDashboard({ metrics }) {
   const defaultMetrics = {

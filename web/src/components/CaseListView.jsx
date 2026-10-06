@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Eye, ShieldAlert, ArrowRight } from 'lucide-react';
+import { FileText, Eye } from 'lucide-react';
 
 export default function CaseListView({ cases, onSelectCase }) {
   const [filter, setFilter] = useState('ALL');

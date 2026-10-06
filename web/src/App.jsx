@@ -9,7 +9,7 @@ import CaseListView from './components/CaseListView';
 import RedTeamArena from './components/RedTeamArena';
 import RoiDashboard from './components/RoiDashboard';
 
-const API_BASE = 'http://localhost:8000';
+import { API_BASE } from './config';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('command');
@@ -44,7 +44,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    refreshData();
+    void refreshData();
 
     // Setup SSE connection
     let eventSource;
@@ -68,7 +68,7 @@ export default function App() {
       eventSource.onerror = () => {
         setConnectionStatus('disconnected');
       };
-    } catch (e) {
+    } catch {
       setConnectionStatus('disconnected');
     }
 
@@ -214,7 +214,6 @@ export default function App() {
             <AlertStream
               transactions={transactions}
               selectedTx={selectedTx}
-              onInjectScenario={handleInjectScenario}
               onSelectTx={(tx) => {
                 setSelectedTx(tx);
                 if (tx.case_id) {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertOctagon, Database, ArrowRight, UserCheck, Smartphone, Landmark, Coins } from 'lucide-react';
+import { AlertOctagon, Database, ArrowRight, UserCheck, Landmark, Coins } from 'lucide-react';
 
 export default function MuleGraphViewer({ analysis }) {
   const defaultAnalysis = {
@@ -15,24 +15,24 @@ export default function MuleGraphViewer({ analysis }) {
   const data = analysis || defaultAnalysis;
 
   return (
-    <div className="glass-panel" style={{ padding: '22px', display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{
-            width: '34px',
-            height: '34px',
-            borderRadius: '9px',
-            background: 'rgba(168, 85, 247, 0.15)',
+            width: '32px',
+            height: '32px',
+            borderRadius: '6px',
+            background: 'rgba(6, 182, 212, 0.12)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            border: '1px solid rgba(168, 85, 247, 0.35)'
+            border: '1px solid rgba(6, 182, 212, 0.3)'
           }}>
-            <AlertOctagon size={18} color="var(--accent-purple)" />
+            <AlertOctagon size={17} color="var(--accent-cyan)" />
           </div>
           <div>
-            <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#f8fafc' }} className="font-display">
+            <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.02em' }} className="font-display">
               BigQuery Mule-Ring Graph Intelligence
             </h2>
             <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
@@ -42,7 +42,7 @@ export default function MuleGraphViewer({ analysis }) {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span className="badge" style={{ background: 'rgba(168, 85, 247, 0.12)', color: '#c084fc', border: '1px solid rgba(168, 85, 247, 0.3)' }}>
+          <span className="badge" style={{ background: 'rgba(6, 182, 212, 0.08)', color: '#38bdf8', border: '1px solid rgba(6, 182, 212, 0.25)' }}>
             <Database size={11} /> BIGQUERY LAKE
           </span>
           <span className="badge badge-hold font-mono tabular-nums">
@@ -52,15 +52,15 @@ export default function MuleGraphViewer({ analysis }) {
       </div>
 
       {/* Metrics Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginBottom: '18px' }}>
-        <div className="interactive-card" style={{ background: 'rgba(255,255,255,0.02)', padding: '14px', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
-          <div style={{ fontSize: '10px', color: 'var(--text-dim)', fontWeight: 700, letterSpacing: '0.04em' }} className="font-mono">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
+        <div className="interactive-card" style={{ background: 'rgba(255,255,255,0.02)', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+          <div style={{ fontSize: '9px', color: 'var(--text-dim)', fontWeight: 700, letterSpacing: '0.05em' }} className="font-mono">
             24H FAN-IN VELOCITY
           </div>
-          <div style={{ fontSize: '22px', fontWeight: 800, color: '#f8fafc', marginTop: '4px' }} className="font-mono tabular-nums">
+          <div style={{ fontSize: '20px', fontWeight: 800, color: '#f8fafc', marginTop: '4px' }} className="font-mono tabular-nums">
             {data.fan_in_count_24h} Senders
           </div>
-          <div style={{ fontSize: '11px', color: '#f59e0b', marginTop: '2px', fontWeight: 600 }}>⚠️ Anomalous spike (&gt;2)</div>
+          <div style={{ fontSize: '10px', color: 'var(--risk-intervene)', marginTop: '2px', fontWeight: 700 }} className="font-mono">[ANOMALOUS SPIKE &gt; 2]</div>
         </div>
 
         <div className="interactive-card" style={{ background: 'rgba(255,255,255,0.02)', padding: '14px', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>

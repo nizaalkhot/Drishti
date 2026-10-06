@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { PhoneCall, ShieldAlert, CheckCircle2, ArrowRight, Smartphone, AlertTriangle, X } from 'lucide-react';
+import { PhoneCall, ShieldAlert, CheckCircle2, Smartphone, AlertTriangle } from 'lucide-react';
 import ConsentAuditModal from './ConsentAuditModal';
+import { API_BASE } from '../config';
 
 export default function PhoneSimulator({ currentTransaction, onSendPayment, isProcessing, language, setLanguage }) {
   const [amount, setAmount] = useState('480000');
@@ -30,7 +31,7 @@ export default function PhoneSimulator({ currentTransaction, onSendPayment, isPr
     if (!currentTransaction) return;
     setIsSubmittingConsent(true);
     try {
-      const res = await fetch('http://localhost:8000/api/v1/consent/record', {
+      const res = await fetch(`${API_BASE}/api/v1/consent/record`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -78,23 +79,52 @@ export default function PhoneSimulator({ currentTransaction, onSendPayment, isPr
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       {/* Subheader */}
-      <div style={{ textAlign: 'center', marginBottom: '12px' }}>
-        <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}>
-          <Smartphone size={16} color="var(--accent-indigo)" />
+      <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+        <h3 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}>
+          <Smartphone size={15} color="var(--accent-cyan)" />
           Customer Phone (Live UPI App)
         </h3>
         <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-          Simulates real customer device signals and Scam Shield friction
+          Simulates real device sensors, telemetry & Scam Shield friction
         </p>
       </div>
 
       {/* Smartphone Frame */}
       <div className="phone-mockup">
         <div className="phone-screen">
+          {/* Status Bar */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '7px 18px 2px',
+            fontSize: '11px',
+            fontWeight: 700,
+            color: '#94a3b8',
+            fontFamily: 'var(--font-mono)',
+            zIndex: 60
+          }}>
+            <span>09:41</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '9px', letterSpacing: '0.04em' }}>5G</span>
+              <div style={{
+                width: '18px',
+                height: '9px',
+                border: '1px solid #94a3b8',
+                borderRadius: '2px',
+                padding: '1px',
+                display: 'flex',
+                alignItems: 'center'
+              }}>
+                <div style={{ width: '85%', height: '100%', background: '#10b981', borderRadius: '1px' }} />
+              </div>
+            </div>
+          </div>
+
           {/* Dynamic Island */}
           <div className="phone-island">
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e' }} />
-            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#1e293b' }} />
+            <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#22c55e' }} />
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#1e293b' }} />
           </div>
 
           {/* Active Call Floating Banner */}
@@ -102,7 +132,7 @@ export default function PhoneSimulator({ currentTransaction, onSendPayment, isPr
             <div style={{
               background: 'linear-gradient(135deg, rgba(220, 38, 38, 0.96) 0%, rgba(185, 28, 28, 0.96) 100%)',
               color: '#ffffff',
-              padding: '28px 14px 10px 14px',
+              padding: '24px 14px 10px 14px',
               fontSize: '11px',
               display: 'flex',
               alignItems: 'center',
@@ -127,7 +157,7 @@ export default function PhoneSimulator({ currentTransaction, onSendPayment, isPr
                   <div style={{ fontWeight: 800, letterSpacing: '0.03em' }} className="font-mono">
                     IN-CALL: +91 98210 44821
                   </div>
-                  <div style={{ fontSize: '9px', opacity: 0.9 }}>Active: {callDuration}m • Remote Audio Link</div>
+                  <div style={{ fontSize: '9px', opacity: 0.9 }}>Active: {callDuration}m • Audio Telemetry Link</div>
                 </div>
               </div>
 
@@ -152,41 +182,41 @@ export default function PhoneSimulator({ currentTransaction, onSendPayment, isPr
 
           {/* UPI Banking App Top Header */}
           <div style={{
-            padding: isCallActive ? '10px 14px' : '34px 14px 10px',
+            padding: isCallActive ? '10px 14px' : '26px 14px 10px',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: 'rgba(15, 23, 42, 0.75)',
+            background: 'rgba(11, 17, 32, 0.85)',
             backdropFilter: 'blur(10px)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-              <div style={{ width: '20px', height: '20px', borderRadius: '5px', background: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 900, color: '#fff' }}>
-                ▲
+              <div style={{ width: '20px', height: '20px', borderRadius: '4px', background: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 900, color: '#fff' }}>
+                UPI
               </div>
-              <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '-0.01em' }} className="font-display">
+              <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '-0.01em', color: '#f8fafc' }} className="font-display">
                 Axis Mobile Pay
               </span>
             </div>
 
             {/* Language Picker */}
-            <div style={{ display: 'flex', gap: '4px' }}>
+            <div style={{ display: 'flex', gap: '3px' }}>
               {['en', 'hi', 'mr'].map((lang) => (
                 <button
                   key={lang}
                   type="button"
                   onClick={() => setLanguage(lang)}
                   style={{
-                    padding: '3px 7px',
+                    padding: '2px 6px',
                     fontSize: '10px',
-                    borderRadius: '5px',
+                    borderRadius: '4px',
                     border: 'none',
                     fontWeight: 700,
                     cursor: 'pointer',
                     transition: 'all 0.15s ease',
-                    background: language === lang ? 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)' : 'rgba(255, 255, 255, 0.06)',
+                    background: language === lang ? 'linear-gradient(135deg, #0e7490 0%, #0891b2 100%)' : 'rgba(255, 255, 255, 0.06)',
                     color: language === lang ? '#ffffff' : 'var(--text-muted)',
-                    boxShadow: language === lang ? '0 2px 6px rgba(99, 102, 241, 0.4)' : 'none'
+                    boxShadow: language === lang ? '0 2px 6px rgba(6, 182, 212, 0.35)' : 'none'
                   }}
                 >
                   {lang === 'en' ? 'EN' : lang === 'hi' ? 'हिंदी' : 'मराठी'}
@@ -451,7 +481,11 @@ export default function PhoneSimulator({ currentTransaction, onSendPayment, isPr
                     color: '#fca5a5',
                     fontSize: '11px'
                   }}>
-                    <strong>🛑 Customer Override Prohibited:</strong> Under RBI Consumer Protection guidelines, high-coercion transfers are temporarily locked. A 2-hour cooling-off window protects your funds.
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                      <AlertTriangle size={14} color="#ef4444" />
+                      <strong style={{ letterSpacing: '0.02em' }}>CUSTOMER OVERRIDE PROHIBITED:</strong>
+                    </div>
+                    Under RBI Consumer Protection guidelines, high-coercion transfers are temporarily locked. A 2-hour cooling-off window protects your funds.
                   </div>
                 ) : showConsentModal ? (
                   /* CON 4: Cryptographic Informed Consent Vault Modal */

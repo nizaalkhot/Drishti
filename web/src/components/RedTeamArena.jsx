@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Bug, ShieldAlert, CheckCircle2, Terminal, Play, ShieldCheck, Cpu } from 'lucide-react';
+import { Bug, ShieldAlert, Play, ShieldCheck } from 'lucide-react';
+import { API_BASE } from '../config';
 
 export default function RedTeamArena() {
   const [archetype, setArchetype] = useState('OBFUSCATED_REMARK');
@@ -9,7 +10,7 @@ export default function RedTeamArena() {
   const handleProbe = async () => {
     setIsProbing(true);
     try {
-      const res = await fetch('http://localhost:8000/api/v1/redteam/probe', {
+      const res = await fetch(`${API_BASE}/api/v1/redteam/probe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ archetype })
@@ -18,7 +19,7 @@ export default function RedTeamArena() {
       setReport(data);
     } catch (e) {
       console.error(e);
-      alert("Failed to connect to backend red-team service at http://localhost:8000");
+      alert(`Failed to connect to backend red-team service at ${API_BASE}`);
     } finally {
       setIsProbing(false);
     }

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { FileText, ShieldAlert, Lock, CheckCircle2, XCircle, Download, UserCheck, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { FileText, Lock, CheckCircle2, ShieldCheck } from 'lucide-react';
 
 export default function CaseDossierModal({ caseItem, onClose, onFreeze, onSignSTR, onDismiss }) {
-  const [unmaskPII, setUnmaskPII] = useState(false);
   const [isActing, setIsActing] = useState(false);
 
   if (!caseItem) return null;
@@ -192,11 +191,23 @@ export default function CaseDossierModal({ caseItem, onClose, onFreeze, onSignST
                   {str.human_sign_off_status}
                 </span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '11px', color: '#cbd5e1' }}>
-                <div>✅ Beneficiary KYC Profile Verified</div>
-                <div>✅ PMLA Sec 12 Regulatory Alignment</div>
-                <div>✅ Telephony & Network Citations Validated</div>
-                <div>✅ I4C / NPCI Registry Cross-Check Completed</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '11px', color: '#cbd5e1' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span className="badge badge-allow font-mono" style={{ fontSize: '9px', padding: '1px 5px' }}>VERIFIED</span>
+                  <span>Beneficiary KYC Profile Inspected</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span className="badge badge-allow font-mono" style={{ fontSize: '9px', padding: '1px 5px' }}>VERIFIED</span>
+                  <span>PMLA Sec 12 Regulatory Alignment</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span className="badge badge-allow font-mono" style={{ fontSize: '9px', padding: '1px 5px' }}>VERIFIED</span>
+                  <span>Telephony & Network Citations Validated</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span className="badge badge-allow font-mono" style={{ fontSize: '9px', padding: '1px 5px' }}>VERIFIED</span>
+                  <span>I4C / NPCI Registry Cross-Check Complete</span>
+                </div>
               </div>
               {str.po_signature_hash && (
                 <div style={{ fontSize: '10px', color: '#94a3b8', background: 'rgba(0,0,0,0.3)', padding: '6px', borderRadius: '4px' }}>
