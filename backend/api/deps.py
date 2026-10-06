@@ -5,20 +5,26 @@ import asyncio
 from typing import Dict, Any, List
 
 from backend.engine.features import FeaturePipeline, VelocityCache
-from backend.engine.risk_scorer import TabularRiskScorer
+from backend.engine.risk_scorer import default_risk_scorer, TabularRiskScorer, VertexAIModelPredictor
 from agents.scam_shield import ScamShieldOrchestrator
 from agents.copilot import InvestigatorCopilot
 from agents.red_team import RedTeamAgent
 from simulator.generator import UPISimulator
+from backend.integrations.pubsub import default_pubsub_service
+from backend.integrations.bigquery_export import default_bq_export
+from backend.integrations.document_ai import default_document_ai
 
 # Service Singletons
 velocity_cache = VelocityCache()
 feature_pipeline = FeaturePipeline(cache=velocity_cache)
-risk_scorer = TabularRiskScorer()
+risk_scorer = default_risk_scorer
 scam_shield = ScamShieldOrchestrator()
 copilot = InvestigatorCopilot()
 red_team = RedTeamAgent(feature_pipeline, risk_scorer, scam_shield)
 simulator = UPISimulator()
+pubsub_service = default_pubsub_service
+bq_export = default_bq_export
+document_ai = default_document_ai
 
 # SSE Event Subscribers
 sse_clients: List[asyncio.Queue] = []

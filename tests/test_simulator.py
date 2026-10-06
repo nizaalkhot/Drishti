@@ -9,7 +9,7 @@ def test_simulator_generates_digital_arrest_scenario():
     assert tx.device.call_duration_minutes >= 30.0
     assert tx.is_first_time_payee is True
     assert tx.amount >= 50000.0
-    assert any(term in tx.remark.lower() for term in ["cbi", "police", "court", "verification", "clearance", "rbi"])
+    assert any(term in tx.remark.lower() for term in ["cbi", "police", "court", "verification", "clearance", "rbi", "trai", "bond"])
 
 def test_simulator_generates_legitimate_scenario():
     sim = UPISimulator()

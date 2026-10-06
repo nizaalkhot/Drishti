@@ -16,6 +16,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ ./backend/
 COPY agents/ ./agents/
 COPY simulator/ ./simulator/
+COPY eval/ ./eval/
+COPY assets/ ./assets/
 
 EXPOSE 8080
 

@@ -4,9 +4,15 @@ Provides non-repudiation audit logging for customer overrides and enforces hard 
 on high-confidence coercion (>0.85) to insulate the bank from regulatory liability.
 """
 import hashlib
+import asyncio
+import logging
 from typing import List, Dict, Optional
 from datetime import datetime, timezone
 from pydantic import BaseModel, Field
+
+from backend.database.repository import ConsentRepository, AuditLogRepository
+
+logger = logging.getLogger("drishti.consent_vault")
 
 class ConsentRequest(BaseModel):
     transaction_id: str
@@ -58,6 +64,7 @@ class InformedConsentVault:
                 can_proceed=False
             )
             self._ledger[receipt_id] = receipt
+            self._persist_receipt_async(receipt, req)
             return receipt
 
         # 2. Verify mandatory non-repudiation inputs
@@ -77,6 +84,7 @@ class InformedConsentVault:
                 can_proceed=False
             )
             self._ledger[receipt_id] = receipt
+            self._persist_receipt_async(receipt, req)
             return receipt
 
         # 3. Successful Informed Consent Recording
@@ -95,7 +103,37 @@ class InformedConsentVault:
             can_proceed=True
         )
         self._ledger[receipt_id] = receipt
+        self._persist_receipt_async(receipt, req)
         return receipt
+
+    def _persist_receipt_async(self, receipt: ConsentReceipt, req: ConsentRequest):
+        async def _do_persist():
+            try:
+                await ConsentRepository.save_receipt(
+                    receipt_id=receipt.receipt_id,
+                    transaction_id=receipt.transaction_id,
+                    customer_id=receipt.customer_id,
+                    status=receipt.status,
+                    scam_score=req.scam_score,
+                    reason=receipt.reason,
+                    chain_hash=receipt.chain_hash,
+                    can_proceed=receipt.can_proceed,
+                    raw_request_json=req.model_dump(mode="json")
+                )
+                await AuditLogRepository.record_audit(
+                    action=receipt.status,
+                    case_id=receipt.transaction_id,
+                    actor=receipt.customer_id,
+                    details_json={"can_proceed": receipt.can_proceed, "reason": receipt.reason}
+                )
+            except Exception as e:
+                logger.warning(f"Failed to record consent receipt in DB: {e}")
+
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(_do_persist())
+        except RuntimeError:
+            pass
 
     def get_receipt(self, receipt_id: str) -> Optional[ConsentReceipt]:
         return self._ledger.get(receipt_id)

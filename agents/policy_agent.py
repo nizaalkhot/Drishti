@@ -1,3 +1,4 @@
+import os
 import re
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
@@ -47,8 +48,40 @@ REGULATORY_DATABASE = [
 def search_rbi_circular_database(query: str) -> str:
     """
     Searches the official RBI and FIU-IND regulatory circular database
-    for guidelines relevant to a given query or scam typology.
+    using Vertex AI Search (Discovery Engine) with local authoritative fallback.
     """
+    # 1. Attempt Vertex AI Search if datastore is configured
+    project_id = os.getenv("GCP_PROJECT", "team-gain")
+    datastore_id = os.getenv("VERTEX_SEARCH_DATASTORE_ID")
+    location = os.getenv("VERTEX_SEARCH_LOCATION", "global")
+    
+    if datastore_id:
+        try:
+            from google.cloud import discoveryengine_v1 as discoveryengine
+            client = discoveryengine.SearchServiceClient()
+            serving_config = client.serving_config_path(
+                project=project_id,
+                location=location,
+                data_store=datastore_id,
+                serving_config="default_config"
+            )
+            request = discoveryengine.SearchRequest(
+                serving_config=serving_config,
+                query=query,
+                page_size=3
+            )
+            response = client.search(request)
+            for result in response.results:
+                data = result.document.derived_struct_data or {}
+                snippets = data.get("snippets", [])
+                title = data.get("title", "RBI / FIU-IND Circular")
+                snippet_text = snippets[0].get("snippet", "") if snippets else ""
+                if snippet_text:
+                    return f"Circular: Vertex-AI-Search/{datastore_id}\nTitle: {title}\nClause: {snippet_text}\nAction: REGULATORY_INTERVENTION_REQUIRED"
+        except Exception:
+            pass  # Fall through to local authoritative database
+
+    # 2. Local Authoritative Search Fallback
     q_lower = query.lower()
     matches = []
     for doc in REGULATORY_DATABASE:

@@ -1,3 +1,5 @@
+import asyncio
+import logging
 from enum import Enum
 from datetime import datetime, timezone
 from typing import List, Dict, Optional, Any
@@ -10,6 +12,11 @@ from agents.adk_config import get_adk_model
 from backend.schemas.transaction import Transaction, FeatureVector
 from backend.engine.risk_scorer import RiskScoreResult
 from agents.scam_shield import ScamShieldDecision
+from backend.database.repository import CaseRepository, AuditLogRepository
+from backend.integrations.pubsub import default_pubsub_service
+from backend.integrations.bigquery_export import default_bq_export
+
+logger = logging.getLogger("drishti.copilot")
 
 class CaseStatus(str, Enum):
     PENDING_REVIEW = "PENDING_REVIEW"
@@ -124,6 +131,7 @@ class InvestigatorCopilot:
             }]
         )
         self._cases[case_id] = dossier
+        self._persist_dossier_async(dossier)
         return dossier
 
     def get_case(self, case_id: str) -> Optional[CaseDossier]:
@@ -220,6 +228,7 @@ class InvestigatorCopilot:
             "status": "ACCOUNT_FROZEN"
         }
         dossier.audit_history.append(audit_entry)
+        self._persist_dossier_async(dossier)
         return audit_entry
 
     def sign_and_export_str(self, case_id: str, officer_name: str) -> Dict[str, Any]:
@@ -247,6 +256,16 @@ class InvestigatorCopilot:
             "human_sign_off_status": "APPROVED_DIGITALLY_SIGNED"
         }
         dossier.audit_history.append(audit_entry)
+
+        # Enterprise integrations: Cloud Pub/Sub topic and BigQuery central lake
+        dossier_dict = dossier.model_dump(mode="json")
+        try:
+            default_pubsub_service.publish_str_filing(dossier_dict)
+            default_bq_export.export_filed_dossier(dossier_dict)
+        except Exception as e:
+            logger.warning(f"PubSub/BigQuery STR export notification failed: {e}")
+
+        self._persist_dossier_async(dossier)
         return audit_entry
 
     def dismiss_false_positive(self, case_id: str, notes: str) -> Dict[str, Any]:
@@ -262,4 +281,41 @@ class InvestigatorCopilot:
             "analyst_notes": notes
         }
         dossier.audit_history.append(audit_entry)
+        self._persist_dossier_async(dossier)
         return audit_entry
+
+    def _persist_dossier_async(self, dossier: CaseDossier):
+        """Asynchronously updates database state and audit logs."""
+        async def _do_persist():
+            try:
+                await CaseRepository.save_case(
+                    case_id=dossier.case_id,
+                    transaction_id=dossier.transaction.txn_id,
+                    sender_vpa=dossier.transaction.sender_vpa,
+                    receiver_vpa=dossier.transaction.receiver_vpa,
+                    amount=dossier.transaction.amount,
+                    risk_score=dossier.risk_result.score,
+                    decision=dossier.risk_result.decision.value,
+                    scam_typology=dossier.scam_decision.scam_typology,
+                    transaction_json=dossier.transaction.model_dump(mode="json"),
+                    features_json=dossier.features.model_dump(mode="json"),
+                    risk_result_json=dossier.risk_result.model_dump(mode="json"),
+                    scam_decision_json=dossier.scam_decision.model_dump(mode="json"),
+                    str_report_json=dossier.str_report.model_dump(mode="json") if dossier.str_report else None,
+                    status=dossier.status.value
+                )
+                await AuditLogRepository.record_audit(
+                    action=dossier.status.value,
+                    case_id=dossier.case_id,
+                    actor="INVESTIGATOR_COPILOT",
+                    details_json={"status": dossier.status.value}
+                )
+            except Exception as e:
+                logger.warning(f"Database persistence for case {dossier.case_id} failed: {e}")
+
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(_do_persist())
+        except RuntimeError:
+            pass
+

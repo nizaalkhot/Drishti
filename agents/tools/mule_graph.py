@@ -14,6 +14,12 @@ class MuleGraphAnalysis(BaseModel):
     graph_edges: List[Dict[str, Any]] = Field(default_factory=list)
     summary: str = ""
 
+try:
+    from google.cloud import bigquery
+    HAVE_BIGQUERY = True
+except ImportError:
+    HAVE_BIGQUERY = False
+
 class MuleGraphService:
     """
     BigQuery Parameterized Mule Graph Analytics Engine.
@@ -21,7 +27,14 @@ class MuleGraphService:
     rapid pass-through layering, and shared device networks.
     """
     def __init__(self, bigquery_client=None):
+        self.project_id = os.getenv("GCP_PROJECT", "team-gain")
         self.bq_client = bigquery_client
+        if self.bq_client is None and HAVE_BIGQUERY and (os.getenv("GOOGLE_APPLICATION_CREDENTIALS") or os.getenv("K_SERVICE")):
+            try:
+                self.bq_client = bigquery.Client(project=self.project_id)
+            except Exception:
+                self.bq_client = None
+
         self._beneficiary_inflows: Dict[str, List[Dict[str, Any]]] = {}
         self._beneficiary_outflows: Dict[str, List[Dict[str, Any]]] = {}
         self._device_to_accounts: Dict[str, List[str]] = {}
@@ -76,6 +89,31 @@ class MuleGraphService:
         fan_in = len(inflows)
         total_inflow = sum(item["amount"] for item in inflows)
         total_outflow = sum(item["amount"] for item in outflows)
+
+        if self.bq_client:
+            try:
+                query = f"""
+                SELECT 
+                    COUNT(DISTINCT sender_id) as fan_in,
+                    COALESCE(SUM(amount), 0.0) as total_inflow,
+                    COALESCE(SUM(CASE WHEN is_passthrough THEN amount ELSE 0 END), 0.0) as total_outflow
+                FROM `{self.project_id}.drishti_fraud_lake.transactions`
+                WHERE beneficiary_id = @beneficiary_id
+                  AND timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 24 HOUR)
+                """
+                job_config = bigquery.QueryJobConfig(
+                    query_parameters=[
+                        bigquery.ScalarQueryParameter("beneficiary_id", "STRING", beneficiary_id)
+                    ]
+                )
+                query_job = self.bq_client.query(query, job_config=job_config)
+                for row in query_job.result():
+                    if row.fan_in > 0:
+                        fan_in = row.fan_in
+                        total_inflow = row.total_inflow
+                        total_outflow = row.total_outflow
+            except Exception:
+                pass
 
         rapid_passthrough = False
         if total_inflow > 0 and (total_outflow / total_inflow) >= 0.8:

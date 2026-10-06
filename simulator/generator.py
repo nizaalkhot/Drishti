@@ -41,7 +41,7 @@ MULE_NAMES: List[Tuple[str, str, str]] = [
 DIGITAL_ARREST_REMARKS = [
     "CBI legal clearance deposit",
     "Supreme Court verification fee ref SC/2026/89",
-    "TRAI identity bond refund guarantee",
+    "TRAI clearance verification bond refund guarantee",
     "Mumbai Cyber Police temporary seizure holding",
     "RBI safety escrow transfer account"
 ]

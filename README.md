@@ -89,6 +89,23 @@ Drishti incorporates six core institutional breakthroughs addressing critical re
 
 ---
 
+## ☁️ Google Cloud Enterprise Architecture
+
+Drishti natively integrates 8 Google Cloud technologies using a resilient **dual-mode enterprise pattern** (active Google Cloud SDK calls in production / GCP environments with robust local engines for zero-downtime offline resilience):
+
+| Google Cloud Technology | Drishti Architecture Role | Implementation Module |
+| :--- | :--- | :--- |
+| **Gemini on Vertex AI** | Reasoning & Conversational Interventions | `agents/intervention_agent.py`, `agents/copilot.py` (ADK LoopAgent) |
+| **BigQuery** | Transaction Lake & Topological Mule Graph Analytics | `agents/tools/mule_graph.py`, `backend/integrations/bigquery_export.py` |
+| **Vertex AI** | Predictive / Classification Tabular Model Registry | `backend/engine/risk_scorer.py` (`drishti-tabular-v1`) |
+| **Document AI** | Financial & Judicial Scam Evidence Forensics | `backend/integrations/document_ai.py`, `agents/tools/doc_parser.py` |
+| **Vertex AI Search** | RBI & PMLA Regulatory Knowledge Retrieval | `agents/policy_agent.py` (`DiscoveryEngine` live datastore) |
+| **Cloud Run** | Low-latency Auto-scaling Container Services | `infra/Dockerfile`, `infra/cloudbuild.yaml` (asia-south1) |
+| **Cloud SQL / AlloyDB** | Application Dossiers & Non-repudiation Vault | `backend/database/` (async SQLAlchemy with PostgreSQL/SQLite) |
+| **Google Cloud Pub/Sub**| Decoupled Event-Driven Transaction Stream | `backend/integrations/pubsub.py` (3 dedicated topics) |
+
+---
+
 ## 📁 Repository Structure
 
 ```
@@ -100,10 +117,18 @@ drishti/
 │   ├── api/                     # Modular FastAPI APIRouters
 │   │   ├── deps.py              # Singletons, metrics store & SSE broadcaster
 │   │   ├── routes_scoring.py    # /score, /simulator/inject, /stream (SSE)
-│   │   ├── routes_cases.py      # /cases, freeze, export-str, dismiss
+│   │   ├── routes_cases.py      # /cases, freeze, export-str, analyze-document
 │   │   ├── routes_consortium.py # /consortium/lookup
 │   │   ├── routes_governance.py # /consent, /cache/metrics, /metrics/roi
 │   │   └── schemas.py           # Pydantic API request & response contracts
+│   ├── database/                # Cloud SQL / AlloyDB persistence layer
+│   │   ├── models.py            # SQLAlchemy models (Dossier, Consent, Audit)
+│   │   ├── db.py                # Async engine & session factory
+│   │   └── repository.py        # CaseRepository, ConsentRepository, AuditLogRepository
+│   ├── integrations/            # Enterprise Google Cloud Service Clients
+│   │   ├── pubsub.py            # Google Cloud Pub/Sub event bus
+│   │   ├── document_ai.py       # Google Cloud Document AI forensic parser
+│   │   └── bigquery_export.py   # BigQuery streaming export & audit journal
 │   ├── cache/                   # Semantic intervention zero-token cache
 │   ├── consortium/              # I4C NCRP salted Bloom filter registry
 │   ├── engine/                  # Feature pipeline, risk scorer & payee memory
@@ -114,9 +139,9 @@ drishti/
 │   ├── scam_shield.py           # Layer 2 Scam Shield orchestrator
 │   ├── copilot.py               # Layer 3 Investigator Copilot & STR LoopAgent
 │   ├── red_team.py              # Layer 4 Adversarial Red-Team agent
-│   ├── policy_agent.py          # Regulatory knowledge retrieval (RBI / FIU-IND)
+│   ├── policy_agent.py          # Vertex AI Search / Discovery Engine policy retrieval
 │   ├── intervention_agent.py    # Multilingual friction dialogs (EN, HI, MR)
-│   └── tools/                   # BigQuery Parameterized Mule Graph Analytics
+│   └── tools/                   # BigQuery Parameterized Mule Graph & Doc AI Tools
 ├── simulator/
 │   └── generator.py             # UPI & APP scam scenario simulator
 ├── eval/
@@ -128,7 +153,8 @@ drishti/
 ├── scripts/
 │   └── record_showcase_mp4.py   # Automated Playwright HD showcase recorder
 ├── tests/
-│   ├── test_*.py                # 27 fast in-memory unit tests (~2s execution)
+│   ├── test_*.py                # 34 fast unit and integration tests (~20s execution)
+│   ├── test_gcp_integrations.py # Google Cloud service integration verification suite
 │   └── e2e/
 │       └── ui_e2e_test.py       # 10-step Playwright browser verification suite
 ├── web/                         # React + Vite split-screen SOC command console
@@ -171,7 +197,7 @@ npm run dev
 ## 🧪 Testing & Validation
 
 ```bash
-# 1. Run unit test suite (all 27 tests in ~2 seconds)
+# 1. Run unit & integration test suite (all 34 tests in ~20 seconds)
 python -m pytest tests/ -v
 
 # 2. Run golden evaluation benchmark (180 scenarios)

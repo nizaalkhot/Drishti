@@ -18,6 +18,8 @@ from backend.api.deps import (
     metrics_store,
     sse_clients,
     broadcast_event,
+    pubsub_service,
+    bq_export,
 )
 
 router = APIRouter(tags=["Scoring & Simulation"])
@@ -131,8 +133,26 @@ async def score_transaction(tx: Transaction, language: str = "en"):
         }
     )
 
+    resp_dict = response.model_dump()
+
     # Broadcast event to SSE clients
-    asyncio.create_task(broadcast_event("TRANSACTION_SCORED", response.model_dump()))
+    asyncio.create_task(broadcast_event("TRANSACTION_SCORED", resp_dict))
+
+    # Enterprise event publishing to Google Cloud Pub/Sub & BigQuery streaming
+    try:
+        pubsub_service.publish_transaction_scored(resp_dict)
+        bq_export.export_transaction_risk(resp_dict)
+        if decision_str in ("INTERVENE", "HOLD"):
+            pubsub_service.publish_fraud_alert({
+                "txn_id": tx.id,
+                "amount": tx.amount,
+                "decision": decision_str,
+                "risk_score": l1_result.score,
+                "case_id": case_id,
+                "friction_tier": friction_tier
+            })
+    except Exception:
+        pass
 
     return response
 
