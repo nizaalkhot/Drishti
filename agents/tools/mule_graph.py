@@ -1,7 +1,10 @@
 import os
+import logging
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
 from google.adk.tools import FunctionTool
+
+logger = logging.getLogger("drishti.mule_graph")
 
 class MuleGraphAnalysis(BaseModel):
     beneficiary_id: str
@@ -112,8 +115,8 @@ class MuleGraphService:
                         fan_in = row.fan_in
                         total_inflow = row.total_inflow
                         total_outflow = row.total_outflow
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"BigQuery topological query skipped or failed ({e}); defaulting to in-memory graph analysis.")
 
         rapid_passthrough = False
         if total_inflow > 0 and (total_outflow / total_inflow) >= 0.8:

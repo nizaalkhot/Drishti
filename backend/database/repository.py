@@ -9,6 +9,40 @@ from backend.database.models import CaseDossierModel, ConsentReceiptModel, Audit
 class CaseRepository:
     """Async repository for investigator case dossiers."""
     @staticmethod
+    async def save_dossier(dossier: Any) -> CaseDossierModel:
+        """
+        Convenience method to save or update directly from a CaseDossier instance,
+        eliminating long parameter list data clumps.
+        """
+        decision_val = (
+            dossier.risk_result.decision.value 
+            if hasattr(dossier.risk_result.decision, 'value') 
+            else str(dossier.risk_result.decision)
+        )
+        status_val = (
+            dossier.status.value 
+            if hasattr(dossier.status, 'value') 
+            else str(dossier.status)
+        )
+        tx_id = getattr(dossier.transaction, "id", getattr(dossier.transaction, "txn_id", dossier.case_id))
+        return await CaseRepository.save_case(
+            case_id=dossier.case_id,
+            transaction_id=tx_id,
+            sender_vpa=dossier.transaction.sender_vpa,
+            receiver_vpa=dossier.transaction.receiver_vpa,
+            amount=dossier.transaction.amount,
+            risk_score=dossier.risk_result.score,
+            decision=decision_val,
+            scam_typology=dossier.scam_decision.scam_typology,
+            transaction_json=dossier.transaction.model_dump(mode="json"),
+            features_json=dossier.features.model_dump(mode="json"),
+            risk_result_json=dossier.risk_result.model_dump(mode="json"),
+            scam_decision_json=dossier.scam_decision.model_dump(mode="json"),
+            str_report_json=dossier.str_report.model_dump(mode="json") if dossier.str_report else None,
+            status=status_val
+        )
+
+    @staticmethod
     async def save_case(
         case_id: str,
         transaction_id: str,

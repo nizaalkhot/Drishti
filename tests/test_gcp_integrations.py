@@ -52,6 +52,30 @@ async def test_database_persistence_and_audit():
     updated = await CaseRepository.get_case("TEST-CASE-GCP-01")
     assert updated.status == "STR_FILED"
 
+    # 2b. Save dossier directly via convenience method (resolves data clump)
+    from agents.copilot import InvestigatorCopilot
+    from simulator.generator import UPISimulator, ScenarioType
+    from backend.engine.features import FeaturePipeline
+    from backend.engine.risk_scorer import TabularRiskScorer
+    from agents.scam_shield import ScamShieldDecision
+
+    copilot = InvestigatorCopilot()
+
+    sim = UPISimulator(seed=42)
+    tx = sim.generate_scenario(ScenarioType.DIGITAL_ARREST)
+    feats = FeaturePipeline().extract_features(tx)
+    l1 = TabularRiskScorer().score(feats)
+    scam = ScamShieldDecision(
+        is_scam_detected=True,
+        scam_typology="DIGITAL_ARREST",
+        confidence_score=0.95,
+        reasoning_summary="Digital arrest coercion detected"
+    )
+    dossier = copilot.create_case(tx, feats, l1, scam)
+
+    saved_dossier = await CaseRepository.save_dossier(dossier)
+    assert saved_dossier.case_id == dossier.case_id
+
     # 3. Save Consent Receipt
     receipt = await ConsentRepository.save_receipt(
         receipt_id="REC-TEST-01",

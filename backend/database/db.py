@@ -1,11 +1,27 @@
-"""
-Database Engine Configuration for Cloud SQL, AlloyDB, and Local Dev.
-"""
 import os
+import asyncio
+import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from backend.database.models import Base
+
+logger = logging.getLogger("drishti.db")
+
+def safe_fire_and_forget(coro) -> None:
+    """
+    Safely schedules an async coroutine on the running event loop in the background.
+    If no loop is running (e.g. synchronous unit test or script), gracefully no-ops.
+    """
+    try:
+        loop = asyncio.get_running_loop()
+        loop.create_task(coro)
+    except RuntimeError:
+        if hasattr(coro, "close"):
+            try:
+                coro.close()
+            except Exception:
+                pass
 
 # Database URL configuration:
 # 1. CLOUD_SQL_CONNECTION_NAME or DATABASE_URL (PostgreSQL / AlloyDB)

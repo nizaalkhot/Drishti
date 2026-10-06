@@ -13,6 +13,7 @@ from backend.schemas.transaction import Transaction, FeatureVector
 from backend.engine.risk_scorer import RiskScoreResult
 from agents.scam_shield import ScamShieldDecision
 from backend.database.repository import CaseRepository, AuditLogRepository
+from backend.database.db import safe_fire_and_forget
 from backend.integrations.pubsub import default_pubsub_service
 from backend.integrations.bigquery_export import default_bq_export
 
@@ -288,22 +289,7 @@ class InvestigatorCopilot:
         """Asynchronously updates database state and audit logs."""
         async def _do_persist():
             try:
-                await CaseRepository.save_case(
-                    case_id=dossier.case_id,
-                    transaction_id=dossier.transaction.txn_id,
-                    sender_vpa=dossier.transaction.sender_vpa,
-                    receiver_vpa=dossier.transaction.receiver_vpa,
-                    amount=dossier.transaction.amount,
-                    risk_score=dossier.risk_result.score,
-                    decision=dossier.risk_result.decision.value,
-                    scam_typology=dossier.scam_decision.scam_typology,
-                    transaction_json=dossier.transaction.model_dump(mode="json"),
-                    features_json=dossier.features.model_dump(mode="json"),
-                    risk_result_json=dossier.risk_result.model_dump(mode="json"),
-                    scam_decision_json=dossier.scam_decision.model_dump(mode="json"),
-                    str_report_json=dossier.str_report.model_dump(mode="json") if dossier.str_report else None,
-                    status=dossier.status.value
-                )
+                await CaseRepository.save_dossier(dossier)
                 await AuditLogRepository.record_audit(
                     action=dossier.status.value,
                     case_id=dossier.case_id,
@@ -313,9 +299,5 @@ class InvestigatorCopilot:
             except Exception as e:
                 logger.warning(f"Database persistence for case {dossier.case_id} failed: {e}")
 
-        try:
-            loop = asyncio.get_running_loop()
-            loop.create_task(_do_persist())
-        except RuntimeError:
-            pass
+        safe_fire_and_forget(_do_persist())
 

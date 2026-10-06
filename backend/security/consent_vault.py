@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from pydantic import BaseModel, Field
 
 from backend.database.repository import ConsentRepository, AuditLogRepository
+from backend.database.db import safe_fire_and_forget
 
 logger = logging.getLogger("drishti.consent_vault")
 
@@ -129,11 +130,7 @@ class InformedConsentVault:
             except Exception as e:
                 logger.warning(f"Failed to record consent receipt in DB: {e}")
 
-        try:
-            loop = asyncio.get_running_loop()
-            loop.create_task(_do_persist())
-        except RuntimeError:
-            pass
+        safe_fire_and_forget(_do_persist())
 
     def get_receipt(self, receipt_id: str) -> Optional[ConsentReceipt]:
         return self._ledger.get(receipt_id)
