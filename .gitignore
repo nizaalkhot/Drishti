@@ -28,6 +28,7 @@ wheels/
 *.mp4
 *.webm
 !brag-output/*.mp4
+!assets/videos/*.mp4
 video_temp/
 brag-output/work/
 env.bak/

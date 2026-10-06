@@ -11,12 +11,15 @@
 
 ---
 
-## 🎥 Full Feature Showcase Video
+## 🎥 Product Showcase & Launch Video
 
-A complete 1600×950 high-definition walkthrough of all fraud scenarios, dual-layer interventions, interactive graph visualizers, and compliance filings is available in:
+[![Drishti Launch Video](brag-output/brag.jpg)](brag-output/brag.mp4)
 
-📹 **[assets/videos/drishti_showcase.mp4](assets/videos/drishti_showcase.mp4)**  
-*(H.264, 1600×950, 25 fps, 3.42 MB, 52s runtime)*
+| Video Edition | Resolution / Spec | Direct Link |
+| :--- | :--- | :--- |
+| **Official 1080p Launch Video** | 1920×1080 Landscape, 30 FPS, Stereo Audio | 📹 **[brag-output/brag.mp4](brag-output/brag.mp4)** |
+| **Mobile & Social Edition** | 1080×1920 Vertical 9:16 (Reels, TikTok, Shorts) | 📱 **[brag-output/brag_vertical.mp4](brag-output/brag_vertical.mp4)** |
+| **Full Interactive Walkthrough** | 1600×950 HD, 52s In-Depth UI Walkthrough | 🎬 **[assets/videos/drishti_showcase.mp4](assets/videos/drishti_showcase.mp4)** |
 
 ---
 
