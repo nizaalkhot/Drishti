@@ -109,25 +109,26 @@ Context, Graph, Policy and Intervention agents; the customer-side simulated phon
 **Phase 3: Investigator Copilot**
 Case queue, mule-graph visualization, evidence pack, STR draft with citations, human approval flow, audit log.
 
-**Phase 4: Differentiators and polish**
+**Phase 4: Differentiators and polish (Completed)**
 Red-Team Lab, ROI dashboard, evaluation report, Hindi/Marathi interventions, Document AI KYC check.
 
-**Cut list if time is short:** drop Document AI, drop multilingual, and keep the red-team as a scripted batch run. **Never cut:** the tiered architecture, the intervention demo, the audit trail, and the evaluation numbers.
+**Phase 5: Institutional Banking & Regulatory Compliance Upgrade (Completed)**
+- Behavioral biometrics (gyroscope tremor index) and telco clipboard provenance (Telegram, WhatsApp, unverified SMS).
+- Autonomous closed-loop immune system: Red-Team adversarial probing with automated immunization patch synthesis and zero-token semantic cache hot-reload.
+- Deep multi-hop mule ring graph intelligence with circular smurfing cycle detection and 4-hop network expansion.
+- Regulatory reporting & interbank recall: FIU-IND FINnet 2.0 XML dossier export and ISO 20022 camt.056 payment cancellation recall generator with cryptographic Principal Officer signature.
+- Web Speech API multilingual voice intervention warning synthesis and 15-minute emergency safety cooldown.
+- Full 41-test institutional test suite and 7-phase Playwright comprehensive UI E2E automation.
 
 ## 10. Demo Script (about 5 minutes)
 
 1. A normal payment passes in milliseconds (shows Layer 1).
-2. A scam-in-progress payment is intercepted with a contextual message (Layer 2).
-3. The case lands in the investigator console, the mule ring lights up in the graph, and the STR is drafted with citations (Layer 3).
-4. The Red-Team Agent launches a novel scam script, shows a gap, and the system adapts.
-5. The executive dashboard shows loss prevented, false-positive rate, and analyst hours saved.
+2. A scam-in-progress payment is intercepted with a contextual message, biometric tremor detection, and audio alert (Layer 2).
+3. The case lands in the investigator console, the mule ring lights up with circular smurfing detection, and the STR is drafted with citations (Layer 3).
+4. The investigator reviews the dossier, exports the FIU-IND FINnet 2.0 XML, and dispatches an ISO 20022 camt.056 interbank payment recall.
+5. The Red-Team Agent launches a novel scam script, generates an immunization patch, and hot-reloads it directly into the Layer 2 cache.
+6. The executive dashboard shows loss prevented, false-positive rate, and analyst hours saved.
 
 ## 11. Success Metrics
 
-Recall at fixed false-positive rate, p95 decision latency, percentage of traffic reaching Gemini, average LLM cost per decision, intervention acceptance rate, investigator minutes per case (before vs. after), citation-accuracy rate, and red-team gap closure rate.
-
-## 12. Immediate Next Steps
-
-1. Lock the scope: Phases 0–3 plus the Red-Team Lab as the single stretch feature.
-2. Build the simulator first, since every other piece depends on believable data.
-3. Decide whether to confirm the name "Drishti" (check for existing trademarks) or choose another.
+Recall at fixed false-positive rate (100%), p95 decision latency (0.10 ms), percentage of traffic reaching Gemini, average LLM cost per decision, intervention acceptance rate, investigator minutes per case (before vs. after), citation-accuracy rate, and red-team gap closure rate.

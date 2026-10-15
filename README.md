@@ -75,20 +75,30 @@
 
 ## 🛡️ Enterprise Fraud Defense Breakthroughs
 
-Drishti incorporates six core institutional breakthroughs addressing critical real-world payment vulnerabilities:
+Drishti incorporates eleven institutional breakthroughs addressing critical real-world payment vulnerabilities:
 
-1. **Telemetry Proxy Imputation for iOS & Web Sandbox:**  
+1. **Behavioral Biometrics & Telco Telemetry:**  
+   Detects micro-tremors via gyroscope jitter score under duress and inspects clipboard source apps (Telegram, WhatsApp, unverified SMS) to catch coerced transfers before authorization.
+2. **Autonomous Closed-Loop Immune System:**  
+   Adversarial Red-Team agent probes the defense with novel attack vectors (Obfuscated Leetspeak, Structured Smurfing <₹50k, Deepfake Judicial) and autonomously synthesizes immunization patches that hot-reload directly into the Layer 2 Semantic Cache.
+3. **Deep Multi-Hop Mule Ring Graph Intelligence:**  
+   Detects multi-hop syndicated mule networks (up to 4 hops) and identifies circular smurfing cycles with rapid pass-through and fan-in topology.
+4. **Institutional Regulatory Compliance & Core Banking Interventions:**  
+   Generates official FIU-IND FINnet 2.0 XML dossiers and dispatches ISO 20022 `camt.056.001.08` Payment Cancellation Recall instructions across interbank networks with cryptographic Principal Officer verification.
+5. **Multilingual Voice Intercept & Cooldown Protection:**  
+   Uses Web Speech API voice alerts in English, Hindi, and Marathi on the mobile client, coupled with a one-tap "Sever Call & Activate 15-Minute Safety Cooldown" to protect coerced victims.
+6. **Telemetry Proxy Imputation for iOS & Web Sandbox:**  
    When OS privacy restrictions prevent direct call or accessibility detection, Drishti imputes coercion through behavioral signals (hesitation latency, rapid clipboard paste cadences, and savings liquidation bursts).
-2. **Trusted Payee Memory & 3-Grade Friction Ladder:**  
+7. **Trusted Payee Memory & 3-Grade Friction Ladder:**  
    Prevents catastrophic false positives on genuine emergency transfers (e.g., ICU deposits while on the phone with family) by grading friction from Tier 0 (silent pass) to Tier 1 (subtle chip) and Tier 2/3 (interactive safety quiz).
-3. **Cold-Start Mule Anomaly Scorer:**  
+8. **Cold-Start Mule Anomaly Scorer:**  
    Detects freshly activated mule accounts (< 3 days old, newly bound VPAs, or student KYC receiving large corporate sums) without requiring prior transaction history.
-4. **Cryptographic Informed Consent Vault & Safety Hard Block:**  
+9. **Cryptographic Informed Consent Vault & Safety Hard Block:**  
    Maintains a tamper-evident SHA-256 audit ledger of customer overrides for non-repudiation. For transactions with scam confidence $>0.85$, a non-negotiable **Safety Hard Block** locks funds under RBI consumer protection mandates.
-5. **Simulated I4C NCRP / NPCI Consortium Registry:**  
-   Enables privacy-preserving cross-bank threat intelligence matching via salted Bloom filters, identifying syndicated mule accounts instantly across institutions.
-6. **Zero-Token Semantic Intervention Cache:**  
-   Intercepts repetitive scam archetypes in $<2$ms with zero token cost, reducing LLM operational overhead by $>80\%$.
+10. **Simulated I4C NCRP / NPCI Consortium Registry:**  
+    Enables privacy-preserving cross-bank threat intelligence matching via salted Bloom filters, identifying syndicated mule accounts instantly across institutions.
+11. **Zero-Token Semantic Intervention Cache:**  
+    Intercepts repetitive scam archetypes in $<2$ms with zero token cost, reducing LLM operational overhead by $>80\%$.
 
 ---
 
@@ -120,10 +130,13 @@ drishti/
 │   ├── api/                     # Modular FastAPI APIRouters
 │   │   ├── deps.py              # Singletons, metrics store & SSE broadcaster
 │   │   ├── routes_scoring.py    # /score, /simulator/inject, /stream (SSE)
-│   │   ├── routes_cases.py      # /cases, freeze, export-str, analyze-document
+│   │   ├── routes_cases.py      # /cases, freeze, finnet-xml, dispatch-recall
 │   │   ├── routes_consortium.py # /consortium/lookup
-│   │   ├── routes_governance.py # /consent, /cache/metrics, /metrics/roi
+│   │   ├── routes_governance.py # /consent, /cache/metrics, /metrics/roi, /immune-patch/apply
 │   │   └── schemas.py           # Pydantic API request & response contracts
+│   ├── compliance/              # Institutional Regulatory & Banking Compliance
+│   │   ├── finnet_generator.py  # FIU-IND FINnet 2.0 XML dossier export generator
+│   │   └── iso20022.py          # ISO 20022 camt.056 payment cancellation recall
 │   ├── database/                # Cloud SQL / AlloyDB persistence layer
 │   │   ├── models.py            # SQLAlchemy models (Dossier, Consent, Audit)
 │   │   ├── db.py                # Async engine & session factory
@@ -132,19 +145,19 @@ drishti/
 │   │   ├── pubsub.py            # Google Cloud Pub/Sub event bus
 │   │   ├── document_ai.py       # Google Cloud Document AI forensic parser
 │   │   └── bigquery_export.py   # BigQuery streaming export & audit journal
-│   ├── cache/                   # Semantic intervention zero-token cache
+│   ├── cache/                   # Semantic intervention zero-token cache with hot-reload
 │   ├── consortium/              # I4C NCRP salted Bloom filter registry
 │   ├── engine/                  # Feature pipeline, risk scorer & payee memory
-│   ├── schemas/                 # Transaction & DeviceSignals models
+│   ├── schemas/                 # Transaction, DeviceSignals & Biometrics models
 │   ├── security/                # Informed consent vault & PII tokenizer
 │   └── main.py                  # Sleek application coordinator (75 lines)
 ├── agents/                      # Google ADK Multi-Agent Hierarchy
 │   ├── scam_shield.py           # Layer 2 Scam Shield orchestrator
 │   ├── copilot.py               # Layer 3 Investigator Copilot & STR LoopAgent
-│   ├── red_team.py              # Layer 4 Adversarial Red-Team agent
+│   ├── red_team.py              # Layer 4 Adversarial Red-Team & Closed-Loop Immune agent
 │   ├── policy_agent.py          # Vertex AI Search / Discovery Engine policy retrieval
 │   ├── intervention_agent.py    # Multilingual friction dialogs (EN, HI, MR)
-│   └── tools/                   # BigQuery Parameterized Mule Graph & Doc AI Tools
+│   └── tools/                   # Multi-Hop Mule Graph & Doc AI Tools
 ├── simulator/
 │   └── generator.py             # UPI & APP scam scenario simulator
 ├── eval/
@@ -154,23 +167,28 @@ drishti/
 │   ├── Dockerfile               # Container packaging for Cloud Run
 │   └── cloudbuild.yaml          # Google Cloud Build deployment pipeline
 ├── scripts/
+│   ├── comprehensive_e2e_test.py# 7-phase full Playwright E2E UI verification suite
 │   └── record_showcase_mp4.py   # Automated Playwright HD showcase recorder
 ├── tests/
-│   ├── test_*.py                # 34 fast unit and integration tests (~20s execution)
+│   ├── test_*.py                # 41 fast unit and integration tests (~20s execution)
+│   ├── test_institutional_features.py # Tests for biometrics, immune patching, ISO 20022 & FINnet
 │   ├── test_gcp_integrations.py # Google Cloud service integration verification suite
 │   └── e2e/
 │       └── ui_e2e_test.py       # 10-step Playwright browser verification suite
 ├── web/                         # React + Vite split-screen SOC command console
-│   └── src/components/
-│       ├── AlertStream.jsx      # Live real-time incoming transaction feed
-│       ├── CaseDossierModal.jsx # AML dossier modal with FIU-IND export
-│       ├── CaseListView.jsx     # Active cases queue & freeze controls
-│       ├── ConsentAuditModal.jsx# Informed Consent Vault modal
-│       ├── MuleGraphViewer.jsx  # Interactive D3/SVG fraud ring visualizer
-│       ├── Navbar.jsx           # Scenario selection & system telemetry
-│       ├── PhoneSimulator.jsx   # Live UPI mobile app & device signals
-│       ├── RedTeamArena.jsx     # Adversarial attack lab & defense reports
-│       └── RoiDashboard.jsx     # Executive ROI & Latency savings dashboard
+│   └── src/
+│       ├── utils/
+│       │   └── voiceSynthesis.js# Web Speech API multilingual warning narrator
+│       └── components/
+│           ├── AlertStream.jsx      # Live real-time incoming transaction feed
+│           ├── CaseDossierModal.jsx # AML dossier modal, FINnet XML & ISO 20022 recall
+│           ├── CaseListView.jsx     # Active cases queue & freeze controls
+│           ├── ConsentAuditModal.jsx# Informed Consent Vault modal
+│           ├── MuleGraphViewer.jsx  # Multi-hop D3/SVG fraud ring visualizer (circular detection)
+│           ├── Navbar.jsx           # Scenario selection & system telemetry
+│           ├── PhoneSimulator.jsx   # Live UPI app, biometrics, call sever & voice alerts
+│           ├── RedTeamArena.jsx     # Adversarial attack lab & closed-loop immune patches
+│           └── RoiDashboard.jsx     # Executive ROI & Latency savings dashboard
 ├── requirements.txt             # Pinned Python dependencies
 └── .gitignore                   # Enterprise ignore rules
 ```
@@ -182,7 +200,7 @@ drishti/
 ### 1. Start the Backend API (FastAPI)
 ```bash
 # From workspace root
-python -m uvicorn backend.main:app --reload --port 8000
+python -m uvicorn backend.main:app --port 8000
 ```
 - Interactive API Docs: `http://localhost:8000/docs`
 - Health Check: `http://localhost:8000/api/v1/health`
@@ -191,7 +209,7 @@ python -m uvicorn backend.main:app --reload --port 8000
 ### 2. Start the Frontend (React + Vite)
 ```bash
 cd web
-npm run dev
+npm.cmd run dev
 ```
 - Open `http://localhost:5173` in your browser.
 
@@ -200,16 +218,19 @@ npm run dev
 ## 🧪 Testing & Validation
 
 ```bash
-# 1. Run unit & integration test suite (all 34 tests in ~20 seconds)
+# 1. Run unit & integration test suite (all 41 tests in ~20-30 seconds)
 python -m pytest tests/ -v
 
-# 2. Run golden evaluation benchmark (180 scenarios)
+# 2. Run institutional features test suite specifically
+python -m pytest tests/test_institutional_features.py -v
+
+# 3. Run golden evaluation benchmark (180 scenarios)
 python -m eval.benchmark
 
-# 3. Run full Playwright browser UI E2E test
-python tests/e2e/ui_e2e_test.py
+# 4. Run full Playwright browser comprehensive UI E2E test
+python scripts/comprehensive_e2e_test.py
 
-# 4. Re-record high-definition MP4 showcase video
+# 5. Re-record high-definition MP4 showcase video
 python scripts/record_showcase_mp4.py
 ```
 
