@@ -35,6 +35,8 @@ steps:
       - 'projects/$PROJECT_ID/locations/asia-south1/connectors/drishti-vpc-conn'
       - '--set-env-vars'
       - 'GCP_PROJECT=$PROJECT_ID,REGION=asia-south1,PUBSUB_TRANSACTIONS_TOPIC=drishti-transaction-events,PUBSUB_ALERTS_TOPIC=drishti-fraud-alerts,PUBSUB_STR_TOPIC=drishti-str-filings,BIGQUERY_DATASET=drishti_fraud_lake,VERTEX_REGION=asia-south1'
+      - '--service-account'
+      - 'drishti-cloudrun-sa@$PROJECT_ID.iam.gserviceaccount.com'
       - '--set-secrets'
       - 'DATABASE_URL=drishti-db-url:latest,REDIS_URL=drishti-redis-url:latest,GEMINI_API_KEY=drishti-gemini-key:latest'
 
