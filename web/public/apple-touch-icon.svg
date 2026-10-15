@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
+  <defs>
+    <linearGradient id="appleBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a1020" />
+      <stop offset="50%" stop-color="#060911" />
+      <stop offset="100%" stop-color="#020408" />
+    </linearGradient>
+    <linearGradient id="appleShield" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="50%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#4f46e5" />
+    </linearGradient>
+  </defs>
+  <rect width="180" height="180" fill="url(#appleBg)" />
+  <rect width="178" height="178" x="1" y="1" fill="none" stroke="rgba(6, 182, 212, 0.4)" stroke-width="1.5" />
+  <path d="M90 28 L134 47 C134 91 115 125 90 144 C65 125 46 91 46 47 Z" fill="url(#appleShield)" stroke="#38bdf8" stroke-width="2.5" />
+  <path d="M68 81 Q90 60 112 81 Q90 102 68 81 Z" fill="#04121e" stroke="#38bdf8" stroke-width="2.5" />
+  <circle cx="90" cy="81" r="8" fill="#06b6d4" />
+  <circle cx="90" cy="81" r="3.5" fill="#f8fafc" />
+</svg>

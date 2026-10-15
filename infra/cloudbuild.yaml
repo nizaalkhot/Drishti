@@ -1,13 +1,13 @@
 steps:
-  # 1. Build Container Image
+  # 1. Build Production Container Image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/backend:$COMMIT_SHA', '-f', 'infra/Dockerfile', '.']
 
-  # 2. Push Container Image
+  # 2. Push Container to Google Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/backend:$COMMIT_SHA']
 
-  # 3. Deploy to Cloud Run (asia-south1)
+  # 3. Deploy to Google Cloud Run with VPC Connector & Secret Manager
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
@@ -25,12 +25,18 @@ steps:
       - '2Gi'
       - '--cpu'
       - '2'
+      - '--min-instances'
+      - '1'
+      - '--max-instances'
+      - '50'
+      - '--concurrency'
+      - '80'
+      - '--vpc-connector'
+      - 'projects/$PROJECT_ID/locations/asia-south1/connectors/drishti-vpc-conn'
       - '--set-env-vars'
-      - 'GCP_PROJECT=$PROJECT_ID,REGION=asia-south1,PUBSUB_TRANSACTIONS_TOPIC=drishti-transaction-events,PUBSUB_ALERTS_TOPIC=drishti-fraud-alerts,PUBSUB_STR_TOPIC=drishti-str-filings,BIGQUERY_DATASET=drishti_fraud_lake,VERTEX_REGION=asia-south1,DATABASE_URL=sqlite+aiosqlite:///./drishti.db'
-      # Production Cloud SQL / AlloyDB Socket Integration:
-      # To connect to Cloud SQL PostgreSQL/AlloyDB in production, append:
-      # - '--add-cloudsql-instances=$PROJECT_ID:asia-south1:drishti-pg-instance'
-      # - '--set-env-vars=CLOUD_SQL_CONNECTION_NAME=$PROJECT_ID:asia-south1:drishti-pg-instance,DB_USER=drishti_app,DB_NAME=drishti_db'
+      - 'GCP_PROJECT=$PROJECT_ID,REGION=asia-south1,PUBSUB_TRANSACTIONS_TOPIC=drishti-transaction-events,PUBSUB_ALERTS_TOPIC=drishti-fraud-alerts,PUBSUB_STR_TOPIC=drishti-str-filings,BIGQUERY_DATASET=drishti_fraud_lake,VERTEX_REGION=asia-south1'
+      - '--set-secrets'
+      - 'DATABASE_URL=drishti-db-url:latest,REDIS_URL=drishti-redis-url:latest,GEMINI_API_KEY=drishti-gemini-key:latest'
 
 images:
   - 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/backend:$COMMIT_SHA'

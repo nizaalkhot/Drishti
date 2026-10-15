@@ -58,7 +58,7 @@ export default function Navbar({ activeTab, setActiveTab, onInjectScenario, isIn
       </div>
 
       {/* Navigation Tabs */}
-      <nav style={{
+      <nav className="desktop-nav" style={{
         display: 'flex',
         gap: '4px',
         background: 'rgba(11, 17, 32, 0.85)',

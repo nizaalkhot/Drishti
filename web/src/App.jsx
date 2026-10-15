@@ -8,6 +8,9 @@ import CaseDossierModal from './components/CaseDossierModal';
 import CaseListView from './components/CaseListView';
 import RedTeamArena from './components/RedTeamArena';
 import RoiDashboard from './components/RoiDashboard';
+import InstallBanner from './components/InstallBanner';
+import MobileBottomNav from './components/MobileBottomNav';
+import { pwaManager } from './utils/pwaManager';
 
 import { API_BASE } from './config';
 
@@ -72,6 +75,7 @@ export default function App() {
 
   useEffect(() => {
     void refreshData();
+    pwaManager.registerServiceWorker();
 
     // Setup SSE connection
     let eventSource;
@@ -226,6 +230,9 @@ export default function App() {
 
   return (
     <div className="app-container">
+      {/* PWA In-App Install Prompt Banner */}
+      <InstallBanner />
+
       {/* Top Navigation */}
       <Navbar
         activeTab={activeTab}
@@ -238,8 +245,8 @@ export default function App() {
       {/* Main Split-Screen Workspace */}
       <main className="main-workspace">
         {/* Left Side: Bank Operations Command Center */}
-        <div className="command-column">
-          {activeTab === 'command' && (
+        <div className={`command-column ${activeTab === 'simulator' ? 'mobile-hidden' : ''}`}>
+          {(activeTab === 'command' || activeTab === 'simulator') && (
             <AlertStream
               transactions={transactions}
               selectedTx={selectedTx}
@@ -274,7 +281,7 @@ export default function App() {
         </div>
 
         {/* Right Side: Interactive Customer Mobile UPI Simulator */}
-        <div className="simulator-column">
+        <div className={`simulator-column ${activeTab !== 'simulator' ? 'mobile-hidden' : ''}`}>
           <PhoneSimulator
             currentTransaction={selectedTx}
             onSendPayment={handleSendPayment}
@@ -295,6 +302,13 @@ export default function App() {
           onDismiss={handleDismiss}
         />
       )}
+
+      {/* Mobile Bottom Navigation Bar (Visible only on mobile screens) */}
+      <MobileBottomNav
+        activeView={activeTab}
+        setActiveView={setActiveTab}
+        unreadAlertsCount={transactions.filter(t => t.risk_score >= 70).length}
+      />
     </div>
   );
 }

@@ -2,9 +2,11 @@
 import time
 import json
 import asyncio
+import os
 from typing import Dict, Any, List
 
 from backend.engine.features import FeaturePipeline, VelocityCache
+from backend.engine.redis_velocity import RedisVelocityCache
 from backend.engine.risk_scorer import default_risk_scorer, TabularRiskScorer, VertexAIModelPredictor
 from agents.scam_shield import ScamShieldOrchestrator
 from agents.copilot import InvestigatorCopilot
@@ -14,8 +16,15 @@ from backend.integrations.pubsub import default_pubsub_service
 from backend.integrations.bigquery_export import default_bq_export
 from backend.integrations.document_ai import default_document_ai
 
-# Service Singletons
-velocity_cache = VelocityCache()
+# Service Singletons: Distributed Memorystore Redis with In-Memory Fallback
+redis_endpoint = os.getenv("REDIS_URL")
+if redis_endpoint:
+    velocity_cache = RedisVelocityCache(redis_endpoint)
+    if not velocity_cache.is_available():
+        velocity_cache = VelocityCache()
+else:
+    velocity_cache = VelocityCache()
+
 feature_pipeline = FeaturePipeline(cache=velocity_cache)
 risk_scorer = default_risk_scorer
 scam_shield = ScamShieldOrchestrator()

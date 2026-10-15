@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad512" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d1527" />
+      <stop offset="50%" stop-color="#060911" />
+      <stop offset="100%" stop-color="#020408" />
+    </linearGradient>
+    <linearGradient id="shieldGrad512" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="45%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#4f46e5" />
+    </linearGradient>
+    <filter id="neonGlow512" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background tile -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad512)" />
+  <rect width="506" height="506" x="3" y="3" rx="109" fill="none" stroke="rgba(6, 182, 212, 0.4)" stroke-width="4" />
+
+  <!-- Outer Radar Rings -->
+  <circle cx="256" cy="256" r="185" fill="none" stroke="rgba(6, 182, 212, 0.16)" stroke-dasharray="10 14" stroke-width="4" />
+  <circle cx="256" cy="256" r="135" fill="none" stroke="rgba(56, 189, 248, 0.22)" stroke-width="2.5" />
+
+  <!-- Shield Core -->
+  <g filter="url(#neonGlow512)">
+    <path d="M256 86 L380 140 C380 262 325 358 256 412 C187 358 132 262 132 140 Z" 
+          fill="url(#shieldGrad512)" 
+          stroke="#38bdf8" 
+          stroke-width="7" />
+  </g>
+
+  <!-- Eye / Drishti Reticle -->
+  <g>
+    <!-- Outer Eye Contour -->
+    <path d="M192 236 Q256 176 320 236 Q256 296 192 236 Z" fill="#04121e" stroke="#38bdf8" stroke-width="7" />
+    <!-- Pupil / Radar Lens -->
+    <circle cx="256" cy="236" r="24" fill="#06b6d4" />
+    <circle cx="256" cy="236" r="10" fill="#f8fafc" />
+    <!-- Scanning Beam Accent -->
+    <path d="M224 236 L288 236" stroke="#ffffff" stroke-width="4" stroke-linecap="round" />
+  </g>
+
+  <!-- Grid nodes & Telemetry accents -->
+  <circle cx="256" cy="352" r="8" fill="#38bdf8" />
+  <circle cx="214" cy="326" r="6" fill="rgba(56, 189, 248, 0.7)" />
+  <circle cx="298" cy="326" r="6" fill="rgba(56, 189, 248, 0.7)" />
+  <line x1="214" y1="326" x2="256" y2="352" stroke="rgba(56, 189, 248, 0.4)" stroke-width="2.5" />
+  <line x1="298" y1="326" x2="256" y2="352" stroke="rgba(56, 189, 248, 0.4)" stroke-width="2.5" />
+</svg>

@@ -24,6 +24,41 @@
   }
 }
 
+/* Mobile & PWA Responsive Breakpoint */
+@media (max-width: 768px) {
+  .app-container {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 12px));
+  }
+
+  .main-workspace {
+    padding: 10px 12px 16px;
+    gap: 16px;
+  }
+
+  .desktop-nav {
+    display: none !important;
+  }
+
+  .mobile-bottom-nav {
+    display: flex !important;
+  }
+
+  .mobile-hidden {
+    display: none !important;
+  }
+
+  .command-column {
+    height: auto;
+    min-height: calc(100dvh - 160px);
+  }
+
+  /* Compact header styling on mobile */
+  .tactical-select {
+    padding: 5px 24px 5px 8px;
+    font-size: 11px;
+  }
+}
+
 .command-column {
   display: flex;
   flex-direction: column;
