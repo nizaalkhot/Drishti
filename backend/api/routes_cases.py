@@ -1,11 +1,13 @@
 from typing import Optional
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, Field
 
 from backend.api.schemas import FreezeRequest, SignSTRRequest, DismissRequest
 from backend.api.deps import copilot, broadcast_event
 from backend.integrations.document_ai import default_document_ai
+from backend.compliance.finnet_generator import generate_finnet2_xml
+from backend.compliance.iso20022 import generate_camt056_recall
 
 class DocumentAnalysisRequest(BaseModel):
     document_text: str = Field(..., description="Document content or OCR text to parse with Document AI")
@@ -75,3 +77,22 @@ async def analyze_case_document(case_id: str, req: DocumentAnalysisRequest):
         return analysis
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Document AI analysis failed: {str(e)}")
+
+@router.get("/api/v1/cases/{case_id}/finnet-xml")
+async def export_finnet_xml(case_id: str, officer_name: str = "Authorized AML Principal Officer"):
+    case = copilot.get_case(case_id)
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+    case_dict = case.model_dump() if hasattr(case, "model_dump") else dict(case)
+    xml_content = generate_finnet2_xml(case_dict, officer_name=officer_name)
+    return Response(content=xml_content, media_type="application/xml")
+
+@router.post("/api/v1/cases/{case_id}/dispatch-recall")
+async def dispatch_iso20022_recall(case_id: str):
+    case = copilot.get_case(case_id)
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+    case_dict = case.model_dump() if hasattr(case, "model_dump") else dict(case)
+    recall_res = generate_camt056_recall(case_dict)
+    await broadcast_event("INTERBANK_RECALL_DISPATCHED", {"case_id": case_id, "recall": recall_res})
+    return recall_res

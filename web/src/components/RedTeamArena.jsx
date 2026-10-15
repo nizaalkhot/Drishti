@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { Bug, ShieldAlert, Play, ShieldCheck } from 'lucide-react';
+import { Bug, ShieldAlert, Play, ShieldCheck, Sparkles, CheckCircle2 } from 'lucide-react';
 import { API_BASE } from '../config';
 
 export default function RedTeamArena() {
   const [archetype, setArchetype] = useState('OBFUSCATED_REMARK');
   const [isProbing, setIsProbing] = useState(false);
   const [report, setReport] = useState(null);
+  const [patchResult, setPatchResult] = useState(null);
+  const [isPatching, setIsPatching] = useState(false);
 
   const handleProbe = async () => {
     setIsProbing(true);
+    setPatchResult(null);
     try {
       const res = await fetch(`${API_BASE}/api/v1/redteam/probe`, {
         method: 'POST',
@@ -22,6 +25,25 @@ export default function RedTeamArena() {
       alert(`Failed to connect to backend red-team service at ${API_BASE}`);
     } finally {
       setIsProbing(false);
+    }
+  };
+
+  const handleAutoPatch = async () => {
+    if (!archetype) return;
+    setIsPatching(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/redteam/auto-patch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archetype })
+      });
+      const data = await res.json();
+      setPatchResult(data);
+    } catch (e) {
+      console.error(e);
+      alert(`Failed to deploy immune patch at ${API_BASE}`);
+    } finally {
+      setIsPatching(false);
     }
   };
 
@@ -180,6 +202,59 @@ export default function RedTeamArena() {
             }} className="font-mono">
               {report.recommended_patch}
             </pre>
+
+            {/* Closed-Loop Auto-Deploy Action */}
+            <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={handleAutoPatch}
+                disabled={isPatching || patchResult !== null}
+                className="btn btn-primary"
+                style={{
+                  padding: '10px 18px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  background: patchResult ? 'rgba(16, 185, 129, 0.2)' : 'linear-gradient(135deg, #0e7490 0%, #0284c7 100%)',
+                  border: patchResult ? '1px solid #10b981' : '1px solid rgba(255, 255, 255, 0.2)',
+                  color: patchResult ? '#34d399' : '#ffffff'
+                }}
+              >
+                {patchResult ? <CheckCircle2 size={16} color="#34d399" /> : <Sparkles size={16} />}
+                {isPatching ? 'Synthesizing & Hot-Reloading Semantic Cache...' : patchResult ? 'Immune Patch Successfully Active in Cache' : 'Auto-Synthesize & Deploy Immune Patch to Zero-Token Cache'}
+              </button>
+
+              {patchResult && (
+                <div style={{
+                  background: 'rgba(16, 185, 129, 0.1)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  borderRadius: '10px',
+                  padding: '14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px',
+                  animation: 'fadeIn 0.2s ease-in'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 800, color: '#34d399' }} className="font-mono">
+                      {patchResult.patch_id} • STATUS: {patchResult.status}
+                    </span>
+                    <span style={{ fontSize: '10px', color: '#6ee7b7' }} className="font-mono">
+                      +~{patchResult.tokens_saved_estimate_monthly.toLocaleString()} tokens saved/mo
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#cbd5e1' }}>
+                    <strong>Seeded Semantic Clusters:</strong> {patchResult.semantic_clusters_seeded.join(', ')}
+                  </div>
+                  <div style={{ fontSize: '10px', color: '#94a3b8', wordBreak: 'break-all' }} className="font-mono">
+                    SHA-256 Audit: {patchResult.audit_hash}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

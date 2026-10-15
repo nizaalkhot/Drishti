@@ -146,7 +146,9 @@ export default function App() {
           call_duration_minutes: payload.call_duration,
           accessibility_service_enabled: payload.accessibility_active,
           remote_app_active: payload.accessibility_active,
-          is_new_device: false
+          is_new_device: false,
+          gyroscope_tremor_score: payload.gyroscope_tremor_score,
+          clipboard_source_app: payload.clipboard_source_app
         },
         is_first_time_payee: true,
         customer_avg_tx_amount: 2500.0

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { PhoneCall, ShieldAlert, CheckCircle2, Smartphone, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { PhoneCall, ShieldAlert, CheckCircle2, Smartphone, AlertTriangle, Volume2, VolumeX, Activity, ClipboardPaste } from 'lucide-react';
 import ConsentAuditModal from './ConsentAuditModal';
 import { API_BASE } from '../config';
+import { guardianVoice } from '../utils/voiceSynthesis';
 
 export default function PhoneSimulator({ currentTransaction, onSendPayment, isProcessing, language, setLanguage }) {
   const [amount, setAmount] = useState('480000');
@@ -10,12 +11,52 @@ export default function PhoneSimulator({ currentTransaction, onSendPayment, isPr
   const [isCallActive, setIsCallActive] = useState(true);
   const [callDuration, setCallDuration] = useState(52);
   const [isApkActive, setIsApkActive] = useState(false);
+  const [isTremorActive, setIsTremorActive] = useState(true);
+  const [clipboardSource, setClipboardSource] = useState('telegram');
+  const [isVoicePlaying, setIsVoicePlaying] = useState(false);
+  const [isCooldownActive, setIsCooldownActive] = useState(false);
   const [interventionOverride, setInterventionOverride] = useState(false);
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [confirmedNoCoercion, setConfirmedNoCoercion] = useState(false);
   const [consentReceipt, setConsentReceipt] = useState(null);
   const [isSubmittingConsent, setIsSubmittingConsent] = useState(false);
   const [quizAnswers, setQuizAnswers] = useState({ q1: false, q2: false });
+
+  // Cleanup voice on unmount or intervention dismiss
+  useEffect(() => {
+    return () => guardianVoice.stop();
+  }, []);
+
+  // Reset interventionOverride when a new transaction is loaded
+  useEffect(() => {
+    setInterventionOverride(false);
+    setIsCooldownActive(false);
+    setShowConsentModal(false);
+  }, [currentTransaction?.transaction_id, currentTransaction?.id]);
+
+  const toggleVoiceGuidance = () => {
+    if (isVoicePlaying) {
+      guardianVoice.stop();
+      setIsVoicePlaying(false);
+    } else if (activeIntervention) {
+      guardianVoice.speakIntervention({
+        headline: activeIntervention.headline,
+        body: activeIntervention.body,
+        language: language,
+        onStart: () => setIsVoicePlaying(true),
+        onEnd: () => setIsVoicePlaying(false)
+      });
+    }
+  };
+
+  const handleSeverCall = () => {
+    guardianVoice.stop();
+    setIsVoicePlaying(false);
+    setIsCallActive(false);
+    setCallDuration(0);
+    setIsCooldownActive(true);
+    setInterventionOverride(true);
+  };
 
   const activeIntervention = (!interventionOverride && currentTransaction && (currentTransaction.decision === 'INTERVENE' || currentTransaction.decision === 'HOLD'))
     ? (currentTransaction.intervention || {
@@ -72,7 +113,9 @@ export default function PhoneSimulator({ currentTransaction, onSendPayment, isPr
       remark: remark,
       is_call_active: isCallActive,
       call_duration: callDuration,
-      accessibility_active: isApkActive
+      accessibility_active: isApkActive,
+      gyroscope_tremor_score: isTremorActive ? 0.85 : 0.0,
+      clipboard_source_app: clipboardSource !== 'none' ? clipboardSource : null
     });
   };
 
@@ -182,6 +225,8 @@ export default function PhoneSimulator({ currentTransaction, onSendPayment, isPr
 
           {/* UPI Banking App Top Header */}
           <div style={{
+            position: 'relative',
+            zIndex: 50,
             padding: isCallActive ? '10px 14px' : '26px 14px 10px',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             display: 'flex',
@@ -366,6 +411,42 @@ export default function PhoneSimulator({ currentTransaction, onSendPayment, isPr
                     style={{ cursor: 'pointer' }}
                   />
                 </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '11px', color: '#fca5a5', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Activity size={12} color="#f87171" />
+                    Hand Tremor (Panic Biometric)
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={isTremorActive}
+                    onChange={(e) => setIsTremorActive(e.target.checked)}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '11px', color: '#93c5fd', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <ClipboardPaste size={12} color="#60a5fa" />
+                    Clipboard Source App
+                  </span>
+                  <select
+                    value={clipboardSource}
+                    onChange={(e) => setClipboardSource(e.target.value)}
+                    style={{
+                      background: 'rgba(15, 23, 42, 0.8)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      color: '#ffffff',
+                      fontSize: '10px',
+                      borderRadius: '4px',
+                      padding: '2px 4px'
+                    }}
+                  >
+                    <option value="telegram">Telegram (Scam VIP)</option>
+                    <option value="whatsapp">WhatsApp (Unknown)</option>
+                    <option value="none">Normal / Typed</option>
+                  </select>
+                </div>
               </div>
 
               {/* CON 2: Tier 1 Warning Chip */}
@@ -399,6 +480,29 @@ export default function PhoneSimulator({ currentTransaction, onSendPayment, isPr
                 {isProcessing ? 'Scoring via Drishti ML...' : `Pay ₹${parseFloat(amount || 0).toLocaleString('en-IN')}`}
               </button>
             </form>
+
+            {/* Emergency Cooldown Active Banner */}
+            {isCooldownActive && (
+              <div style={{
+                marginTop: '10px',
+                padding: '10px',
+                borderRadius: '8px',
+                background: 'rgba(6, 182, 212, 0.15)',
+                border: '1px solid rgba(6, 182, 212, 0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                color: '#67e8f9'
+              }}>
+                <ShieldAlert size={18} color="#22d3ee" />
+                <div style={{ fontSize: '11px' }}>
+                  <strong>🛡️ Drishti Shield Active: Call Severed</strong>
+                  <div style={{ fontSize: '9px', opacity: 0.9 }}>
+                    15-minute protective cooldown enforced. High-risk transaction blocked and victim funds secured.
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Clean Transaction Status */}
             {currentTransaction && currentTransaction.decision === 'ALLOW' && (
@@ -530,19 +634,69 @@ export default function PhoneSimulator({ currentTransaction, onSendPayment, isPr
                   </div>
                 )}
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
-                  {/* Primary Save Action */}
+                {/* DRISHTI GUARDIAN: REAL-TIME CRISIS VOICE GUIDANCE */}
+                <div style={{
+                  background: 'rgba(14, 116, 144, 0.2)',
+                  border: '1px solid rgba(6, 182, 212, 0.4)',
+                  borderRadius: '10px',
+                  padding: '10px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent-cyan)' }}>
+                      {isVoicePlaying ? <Volume2 size={16} className="pulse" /> : <VolumeX size={16} />}
+                      <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.04em' }}>
+                        DRISHTI GUARDIAN VOICE INTERCEPT
+                      </span>
+                    </div>
+                    {isVoicePlaying && (
+                      <span style={{ fontSize: '9px', color: '#67e8f9', fontWeight: 600 }}>
+                        DISPATCH BROADCASTING...
+                      </span>
+                    )}
+                  </div>
+
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsCallActive(false);
-                      setInterventionOverride(true);
-                      setShowConsentModal(false);
+                    onClick={toggleVoiceGuidance}
+                    style={{
+                      background: isVoicePlaying ? 'rgba(239, 68, 68, 0.3)' : 'linear-gradient(135deg, #0891b2 0%, #0284c7 100%)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      color: '#ffffff',
+                      borderRadius: '6px',
+                      padding: '7px 10px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px'
                     }}
-                    className="btn btn-danger"
-                    style={{ width: '100%', padding: '10px', fontSize: '12px' }}
                   >
-                    {activeIntervention.primary_action}
+                    {isVoicePlaying ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                    {isVoicePlaying ? "Mute Voice Intercept" : `Speak Fraud Officer Guidance (${language.toUpperCase()})`}
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+                  {/* Emergency Sever Call Button */}
+                  <button
+                    type="button"
+                    onClick={handleSeverCall}
+                    className="btn btn-danger"
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      fontSize: '12px',
+                      background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+                      boxShadow: '0 0 15px rgba(220, 38, 38, 0.5)',
+                      fontWeight: 800
+                    }}
+                  >
+                    🛑 Sever Call & Enforce 15-Min Shield Cooldown
                   </button>
 
                   {/* Secondary Helpline Action */}

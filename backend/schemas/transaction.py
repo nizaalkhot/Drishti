@@ -1,6 +1,13 @@
 from datetime import datetime, timezone
+from enum import Enum
 from typing import Optional, List
 from pydantic import BaseModel, Field
+
+class ClipboardSourceApp(str, Enum):
+    TELEGRAM = "telegram"
+    WHATSAPP = "whatsapp"
+    UNVERIFIED_SMS = "unverified_sms"
+    NONE = "none"
 
 class DeviceSignals(BaseModel):
     device_id: str = Field(..., description="Unique hardware/device fingerprint")
@@ -16,6 +23,10 @@ class DeviceSignals(BaseModel):
     clipboard_paste_cadence_ms: Optional[int] = Field(None, description="Latency between entering screen and VPA paste (ms)")
     hesitation_duration_seconds: Optional[float] = Field(None, description="Hesitation/idle duration on payment screen (seconds)")
     savings_liquidation_burst: bool = Field(False, description="Sudden liquidation from FD/savings into current account immediately prior")
+    # Biometrics & Telco Telemetry Upgrades
+    gyroscope_tremor_score: float = Field(0.0, ge=0.0, le=1.0, description="Hand tremor jitter index under stress")
+    clipboard_source_app: Optional[ClipboardSourceApp] = Field(None, description="Source app of pasted clipboard payload (e.g., telegram, whatsapp, unverified_sms)")
+    audio_coercion_signature: Optional[str] = Field(None, description="Detected coercion sound or phrase signature")
 
 class Transaction(BaseModel):
     id: str = Field(..., description="Unique transaction ID")
@@ -57,3 +68,5 @@ class FeatureVector(BaseModel):
     receiver_cold_start_anomaly: float = 0.0
     trusted_payee_score: float = 0.0
     consortium_blacklisted_flag: float = 0.0
+    gyroscope_tremor_score: float = 0.0
+    untrusted_clipboard_flag: float = 0.0

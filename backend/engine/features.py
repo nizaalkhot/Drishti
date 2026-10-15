@@ -1,6 +1,6 @@
 from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Tuple
-from backend.schemas.transaction import Transaction, FeatureVector
+from backend.schemas.transaction import Transaction, FeatureVector, ClipboardSourceApp
 from backend.engine.telemetry_proxy import default_telemetry_imputer, TelemetryProxyImputer
 from backend.engine.payee_memory import default_payee_memory, TrustedPayeeMemory
 from backend.engine.cold_start_mule import default_cold_start_scorer, ColdStartMuleScorer
@@ -109,5 +109,11 @@ class FeaturePipeline:
             savings_liquidation_flag=liquidation_flag,
             receiver_cold_start_anomaly=cold_start_score,
             trusted_payee_score=trust_score,
-            consortium_blacklisted_flag=is_consortium_blacklisted
+            consortium_blacklisted_flag=is_consortium_blacklisted,
+            gyroscope_tremor_score=tx.device.gyroscope_tremor_score,
+            untrusted_clipboard_flag=1.0 if tx.device.clipboard_source_app in [
+                ClipboardSourceApp.TELEGRAM,
+                ClipboardSourceApp.WHATSAPP,
+                ClipboardSourceApp.UNVERIFIED_SMS
+            ] else 0.0
         )

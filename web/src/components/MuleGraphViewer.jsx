@@ -1,7 +1,156 @@
-import React from 'react';
-import { AlertOctagon, Database, ArrowRight, UserCheck, Landmark, Coins } from 'lucide-react';
+import React, { useState } from 'react';
+import { AlertOctagon, Database, ArrowRight, UserCheck, Landmark, Coins, GitFork } from 'lucide-react';
+
+function RemitterColumn({ remitters, label, subtitle, compact }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: compact ? '6px' : '10px', minWidth: compact ? '130px' : '150px' }}>
+      <span style={{ fontSize: compact ? '10px' : '11px', fontWeight: 700, color: '#93c5fd', letterSpacing: '0.04em' }} className="font-mono">
+        {label}
+      </span>
+      {remitters.map((victim, i) => (
+        <div
+          key={i}
+          className="interactive-card"
+          style={{
+            padding: compact ? '5px 8px' : '7px 12px',
+            borderRadius: compact ? '6px' : '8px',
+            background: 'rgba(59, 130, 246, 0.12)',
+            border: '1px solid rgba(59, 130, 246, 0.3)',
+            fontSize: compact ? '10px' : '11px',
+            fontWeight: 600,
+            color: '#93c5fd',
+            display: 'flex',
+            alignItems: 'center',
+            gap: compact ? '6px' : '8px'
+          }}
+        >
+          <UserCheck size={compact ? 11 : 13} color="#60a5fa" />
+          <span className="font-mono">{victim}</span>
+        </div>
+      ))}
+      {subtitle && (
+        <span style={{ fontSize: '9px', color: '#60a5fa' }} className="font-mono">{subtitle}</span>
+      )}
+    </div>
+  );
+}
+
+function AggregatorMuleCard({ beneficiaryId, clusterId, transitTime, compact }) {
+  return (
+    <div className="interactive-card" style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      background: 'rgba(239, 68, 68, 0.14)',
+      border: '2px solid #ef4444',
+      borderRadius: compact ? '12px' : '16px',
+      padding: compact ? '12px' : '18px',
+      boxShadow: compact ? '0 0 20px rgba(239, 68, 68, 0.35)' : '0 0 32px rgba(239, 68, 68, 0.35)',
+      textAlign: 'center',
+      minWidth: compact ? '150px' : '200px'
+    }}>
+      <div style={{
+        width: compact ? '32px' : '46px',
+        height: compact ? '32px' : '46px',
+        borderRadius: '50%',
+        background: '#ef4444',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: compact ? '6px' : '10px',
+        boxShadow: compact ? '0 0 15px rgba(239, 68, 68, 0.7)' : '0 0 20px rgba(239, 68, 68, 0.7)'
+      }}>
+        <AlertOctagon size={compact ? 16 : 24} color="#ffffff" />
+      </div>
+      <div style={{ fontSize: compact ? '11px' : '13px', fontWeight: 800, color: '#ffffff' }} className="font-display">
+        {compact ? 'HOP 1: ESCROW MULE' : 'AGGREGATOR MULE'}
+      </div>
+      <div style={{ fontSize: compact ? '10px' : '11px', color: '#fca5a5', fontWeight: 600, marginTop: '2px' }} className="font-mono">
+        {beneficiaryId}
+      </div>
+      <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.25)', color: '#fca5a5', marginTop: compact ? '6px' : '8px', fontSize: compact ? '9px' : '10px', border: '1px solid rgba(239, 68, 68, 0.4)' }}>
+        {transitTime || `Cluster: ${clusterId}`}
+      </span>
+    </div>
+  );
+}
+
+function SmurfLayerColumn({ smurfs }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: '140px' }}>
+      <span style={{ fontSize: '10px', fontWeight: 700, color: '#facc15', letterSpacing: '0.04em' }} className="font-mono">
+        HOP 2: SMURF SPLIT (&lt;₹50k)
+      </span>
+      {smurfs.map((smurf, i) => (
+        <div
+          key={i}
+          className="interactive-card"
+          style={{
+            padding: '5px 8px',
+            borderRadius: '6px',
+            background: 'rgba(234, 179, 8, 0.12)',
+            border: '1px solid rgba(234, 179, 8, 0.35)',
+            fontSize: '10px',
+            fontWeight: 600,
+            color: '#fef08a'
+          }}
+        >
+          <span className="font-mono">{smurf}</span>
+        </div>
+      ))}
+      <span style={{ fontSize: '9px', color: '#eab308' }} className="font-mono">Structured evasion</span>
+    </div>
+  );
+}
+
+function ExtractionSinkList({ label, compact }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: compact ? '6px' : '14px', minWidth: compact ? '140px' : 'auto' }}>
+      <span style={{ fontSize: compact ? '10px' : '11px', fontWeight: 700, color: '#d8b4fe', letterSpacing: '0.04em' }} className="font-mono">
+        {label}
+      </span>
+      <div className="interactive-card" style={{
+        padding: compact ? '6px 8px' : '10px 14px',
+        borderRadius: compact ? '6px' : '10px',
+        background: 'rgba(168, 85, 247, 0.14)',
+        border: '1px solid rgba(168, 85, 247, 0.4)',
+        fontSize: compact ? '10px' : '11px',
+        color: '#d8b4fe',
+        fontWeight: 600
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <Landmark size={compact ? 12 : 14} color="#c084fc" />
+          <span>Cardless ATM Sinks</span>
+        </div>
+        <div style={{ fontSize: compact ? '9px' : '10px', color: 'var(--text-dim)', marginTop: compact ? '2px' : '4px' }} className="font-mono">
+          Mumbai Bandra #44
+        </div>
+      </div>
+
+      <div className="interactive-card" style={{
+        padding: compact ? '6px 8px' : '10px 14px',
+        borderRadius: compact ? '6px' : '10px',
+        background: 'rgba(168, 85, 247, 0.14)',
+        border: '1px solid rgba(168, 85, 247, 0.4)',
+        fontSize: compact ? '10px' : '11px',
+        color: '#d8b4fe',
+        fontWeight: 600
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <Coins size={compact ? 12 : 14} color="#c084fc" />
+          <span>Crypto OTC Desk</span>
+        </div>
+        <div style={{ fontSize: compact ? '9px' : '10px', color: '#f87171', marginTop: compact ? '2px' : '4px' }}>
+          USDT P2P Escrow
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function MuleGraphViewer({ analysis }) {
+  const [isMultiHopMode, setIsMultiHopMode] = useState(true);
+
   const defaultAnalysis = {
     beneficiary_id: "MULE-AGGREGATOR-RING-1",
     mule_risk_score: 0.94,
@@ -36,12 +185,32 @@ export default function MuleGraphViewer({ analysis }) {
               BigQuery Mule-Ring Graph Intelligence
             </h2>
             <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-              Topological 1-Hop & 2-Hop Graph Traversal (Shared Devices, Fan-In & Pass-Through)
+              Topological 4-Hop Smurfing Traversal (Shared Devices, Fan-In & Pass-Through)
             </p>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            type="button"
+            onClick={() => setIsMultiHopMode(!isMultiHopMode)}
+            style={{
+              background: isMultiHopMode ? 'rgba(168, 85, 247, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+              border: isMultiHopMode ? '1px solid #c084fc' : '1px solid rgba(255, 255, 255, 0.1)',
+              color: isMultiHopMode ? '#e9d5ff' : '#94a3b8',
+              borderRadius: '6px',
+              padding: '4px 8px',
+              fontSize: '11px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px'
+            }}
+          >
+            <GitFork size={13} />
+            {isMultiHopMode ? 'Multi-Hop Smurfing (4 Hops Active)' : 'Switch to 4-Hop Mode'}
+          </button>
           <span className="badge" style={{ background: 'rgba(6, 182, 212, 0.08)', color: '#38bdf8', border: '1px solid rgba(6, 182, 212, 0.25)' }}>
             <Database size={11} /> BIGQUERY LAKE
           </span>
@@ -112,127 +281,47 @@ export default function MuleGraphViewer({ analysis }) {
           pointerEvents: 'none'
         }} />
 
-        {/* Graph Nodes Layout */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '92%', position: 'relative', zIndex: 1 }}>
-          {/* Victims Fan-In */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <span style={{ fontSize: '11px', fontWeight: 700, color: '#93c5fd', letterSpacing: '0.04em' }} className="font-mono">
-              VICTIM REMITTERS
-            </span>
-            {['CUST-101 (Arun)', 'CUST-102 (Meera)', 'CUST-103 (Sunil)', 'CUST-104 (Pooja)'].map((victim, i) => (
-              <div
-                key={i}
-                className="interactive-card"
-                style={{
-                  padding: '7px 12px',
-                  borderRadius: '8px',
-                  background: 'rgba(59, 130, 246, 0.12)',
-                  border: '1px solid rgba(59, 130, 246, 0.3)',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  color: '#93c5fd',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <UserCheck size={13} color="#60a5fa" />
-                <span className="font-mono">{victim}</span>
-              </div>
-            ))}
-          </div>
+        {/* Unified Graph Nodes Layout */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          width: isMultiHopMode ? '96%' : '90%',
+          position: 'relative',
+          zIndex: 1,
+          gap: '8px'
+        }}>
+          <RemitterColumn
+            remitters={isMultiHopMode ? ['CUST-101 (Arun)', 'CUST-102 (Meera)', 'CUST-103 (Sunil)'] : ['CUST-101 (Arun)', 'CUST-102 (Meera)', 'CUST-103 (Sunil)', 'CUST-104 (Pooja)']}
+            label={isMultiHopMode ? "HOP 0: REMITTERS" : "VICTIM REMITTERS"}
+            subtitle={isMultiHopMode ? "Inflow: ₹4,80,000" : null}
+            compact={isMultiHopMode}
+          />
 
-          {/* Fan-in Arrows */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', color: 'rgba(255,255,255,0.25)' }}>
-            <ArrowRight size={18} />
-            <ArrowRight size={18} />
-            <ArrowRight size={18} />
-            <ArrowRight size={18} />
-          </div>
+          <ArrowRight size={18} color="rgba(255,255,255,0.4)" />
 
-          {/* Central Aggregator Mule Node */}
-          <div className="interactive-card" style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            background: 'rgba(239, 68, 68, 0.14)',
-            border: '2px solid #ef4444',
-            borderRadius: '16px',
-            padding: '18px',
-            boxShadow: '0 0 32px rgba(239, 68, 68, 0.35)',
-            textAlign: 'center',
-            minWidth: '200px'
-          }}>
-            <div style={{
-              width: '46px',
-              height: '46px',
-              borderRadius: '50%',
-              background: '#ef4444',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '10px',
-              boxShadow: '0 0 20px rgba(239, 68, 68, 0.7)'
-            }}>
-              <AlertOctagon size={24} color="#ffffff" />
-            </div>
-            <div style={{ fontSize: '13px', fontWeight: 800, color: '#ffffff' }} className="font-display">
-              AGGREGATOR MULE
-            </div>
-            <div style={{ fontSize: '11px', color: '#fca5a5', fontWeight: 600, marginTop: '2px' }} className="font-mono">
-              {data.beneficiary_id}
-            </div>
-            <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.25)', color: '#fca5a5', marginTop: '8px', border: '1px solid rgba(239, 68, 68, 0.4)' }}>
-              Cluster: {data.ring_cluster_id}
-            </span>
-          </div>
+          <AggregatorMuleCard
+            beneficiaryId={data.beneficiary_id}
+            clusterId={data.ring_cluster_id}
+            transitTime={isMultiHopMode ? "Transit: 42s" : null}
+            compact={isMultiHopMode}
+          />
 
-          {/* Pass-through Arrow */}
-          <div style={{ color: '#ef4444' }}>
-            <ArrowRight size={24} className="animate-pulse-slow" strokeWidth={2.5} />
-          </div>
+          <ArrowRight size={18} color="#ef4444" className="animate-pulse-slow" />
 
-          {/* Cash-Out & Layering Mules */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <span style={{ fontSize: '11px', fontWeight: 700, color: '#d8b4fe', letterSpacing: '0.04em' }} className="font-mono">
-              CASHOUT / LAYERING
-            </span>
-            <div className="interactive-card" style={{
-              padding: '10px 14px',
-              borderRadius: '10px',
-              background: 'rgba(168, 85, 247, 0.14)',
-              border: '1px solid rgba(168, 85, 247, 0.4)',
-              fontSize: '11px',
-              color: '#d8b4fe',
-              fontWeight: 600
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Landmark size={14} color="#c084fc" />
-                <span>ATM Cash-Out Mule #1</span>
-              </div>
-              <div style={{ fontSize: '10px', color: 'var(--text-dim)', marginTop: '4px' }} className="font-mono">
-                Device: DEV-MULE-01
-              </div>
-            </div>
+          {isMultiHopMode && (
+            <>
+              <SmurfLayerColumn
+                smurfs={['MULE-SMURF-A (₹49,500)', 'MULE-SMURF-B (₹48,800)', 'MULE-SMURF-C (₹49,200)']}
+              />
+              <ArrowRight size={18} color="#c084fc" className="animate-pulse-slow" />
+            </>
+          )}
 
-            <div className="interactive-card" style={{
-              padding: '10px 14px',
-              borderRadius: '10px',
-              background: 'rgba(168, 85, 247, 0.14)',
-              border: '1px solid rgba(168, 85, 247, 0.4)',
-              fontSize: '11px',
-              color: '#d8b4fe',
-              fontWeight: 600
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Coins size={14} color="#c084fc" />
-                <span>Crypto Exchange Merchant</span>
-              </div>
-              <div style={{ fontSize: '10px', color: '#f87171', marginTop: '4px' }}>
-                Drained in 8 mins
-              </div>
-            </div>
-          </div>
+          <ExtractionSinkList
+            label={isMultiHopMode ? "HOP 3: EXTRACTION SINKS" : "CASHOUT / LAYERING"}
+            compact={isMultiHopMode}
+          />
         </div>
       </div>
 

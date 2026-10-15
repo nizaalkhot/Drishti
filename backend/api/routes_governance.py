@@ -3,7 +3,7 @@ from fastapi import APIRouter
 
 from backend.security.consent_vault import default_consent_vault, ConsentRequest, ConsentReceipt
 from backend.cache.semantic_cache import default_semantic_cache
-from agents.red_team import DefenseGapReport
+from agents.red_team import DefenseGapReport, ImmunePatchResult
 from backend.api.schemas import RedTeamProbeRequest
 from backend.api.deps import metrics_store, red_team, broadcast_event
 
@@ -28,6 +28,12 @@ async def redteam_probe(req: RedTeamProbeRequest):
     report = await red_team.probe(req.archetype)
     await broadcast_event("REDTEAM_PROBE_COMPLETED", report.model_dump(mode="json"))
     return report
+
+@router.post("/api/v1/redteam/auto-patch", response_model=ImmunePatchResult)
+async def redteam_auto_patch(req: RedTeamProbeRequest):
+    patch = red_team.synthesize_immune_patch(req.archetype)
+    await broadcast_event("IMMUNE_PATCH_DEPLOYED", patch.model_dump(mode="json"))
+    return patch
 
 @router.get("/api/v1/metrics/roi")
 async def get_roi_metrics():

@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { FileText, Lock, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { FileText, Lock, CheckCircle2, ShieldCheck, Download, Send } from 'lucide-react';
+import { API_BASE } from '../config';
 
 export default function CaseDossierModal({ caseItem, onClose, onFreeze, onSignSTR, onDismiss }) {
   const [isActing, setIsActing] = useState(false);
+  const [isRecalling, setIsRecalling] = useState(false);
+  const [recallResult, setRecallResult] = useState(null);
 
   if (!caseItem) return null;
 
@@ -10,6 +13,41 @@ export default function CaseDossierModal({ caseItem, onClose, onFreeze, onSignST
   const str = caseItem.str_report;
   const scam = caseItem.scam_decision;
   const status = caseItem.status;
+
+  const handleDownloadFINnetXML = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/cases/${caseItem.case_id}/finnet-xml`);
+      if (!res.ok) throw new Error("Failed to fetch FINnet 2.0 XML");
+      const xmlBlob = await res.blob();
+      const url = window.URL.createObjectURL(xmlBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `FINnet2_STR_${caseItem.case_id}.xml`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (e) {
+      console.error(e);
+      alert("Error downloading FINnet 2.0 XML");
+    }
+  };
+
+  const handleDispatchRecall = async () => {
+    setIsRecalling(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/cases/${caseItem.case_id}/dispatch-recall`, {
+        method: 'POST'
+      });
+      const data = await res.json();
+      setRecallResult(data);
+    } catch (e) {
+      console.error(e);
+      alert("Error dispatching ISO 20022 recall");
+    } finally {
+      setIsRecalling(false);
+    }
+  };
 
   const handleFreeze = async () => {
     setIsActing(true);
@@ -217,32 +255,84 @@ export default function CaseDossierModal({ caseItem, onClose, onFreeze, onSignST
               )}
             </div>
           )}
+
+          {/* ISO 20022 Recall Acknowledgement Banner */}
+          {recallResult && (
+            <div style={{
+              marginTop: '12px',
+              padding: '12px 14px',
+              borderRadius: '10px',
+              background: 'rgba(16, 185, 129, 0.12)',
+              border: '1px solid rgba(16, 185, 129, 0.35)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: '#34d399' }} className="font-mono">
+                  ISO 20022 CLAWBACK DISPATCHED ({recallResult.standard})
+                </span>
+                <span className="badge badge-allow font-mono" style={{ fontSize: '9px' }}>
+                  {recallResult.interbank_acknowledgement}
+                </span>
+              </div>
+              <div style={{ fontSize: '11px', color: '#cbd5e1' }}>
+                Demanded immediate interbank freeze of ₹{recallResult.clawback_amount_inr.toLocaleString('en-IN')} on beneficiary <strong>{recallResult.target_beneficiary_vpa}</strong> at receiving bank ({recallResult.instructed_agent}).
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer Actions */}
         <div style={{
-          padding: '16px 20px',
+          padding: '14px 20px',
           borderTop: '1px solid var(--border-subtle)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          background: 'rgba(8, 12, 20, 0.6)'
+          background: 'rgba(8, 12, 20, 0.6)',
+          flexWrap: 'wrap',
+          gap: '8px'
         }}>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <button
               onClick={handleFreeze}
               disabled={isActing || status === 'ACCOUNT_FROZEN'}
               className="btn btn-danger"
+              style={{ fontSize: '12px', padding: '8px 12px' }}
             >
-              <Lock size={14} /> Mark Lien & Freeze Account
+              <Lock size={13} /> Mark Lien & Freeze Account
+            </button>
+
+            <button
+              onClick={handleDispatchRecall}
+              disabled={isRecalling || recallResult !== null}
+              className="btn btn-primary"
+              style={{
+                fontSize: '12px',
+                padding: '8px 12px',
+                background: recallResult ? 'rgba(16, 185, 129, 0.2)' : 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                border: recallResult ? '1px solid #10b981' : '1px solid rgba(255,255,255,0.2)'
+              }}
+            >
+              <Send size={13} /> {isRecalling ? 'Dispatching...' : recallResult ? 'ISO Recall Active' : 'Dispatch ISO 20022 Recall'}
             </button>
 
             <button
               onClick={handleSign}
               disabled={isActing || status === 'STR_FILED'}
               className="btn btn-primary"
+              style={{ fontSize: '12px', padding: '8px 12px' }}
             >
-              <CheckCircle2 size={14} /> Sign & Export FIU-IND STR
+              <CheckCircle2 size={13} /> Sign STR
+            </button>
+
+            <button
+              onClick={handleDownloadFINnetXML}
+              className="btn btn-outline"
+              style={{ fontSize: '12px', padding: '8px 12px', color: '#67e8f9', borderColor: 'rgba(6, 182, 212, 0.4)' }}
+            >
+              <Download size={13} /> FINnet 2.0 XML
             </button>
           </div>
 
@@ -250,8 +340,9 @@ export default function CaseDossierModal({ caseItem, onClose, onFreeze, onSignST
             onClick={handleDismiss}
             disabled={isActing || status === 'FALSE_POSITIVE_DISMISSED'}
             className="btn btn-outline"
+            style={{ fontSize: '12px', padding: '8px 12px' }}
           >
-            Dismiss as False Positive
+            Dismiss
           </button>
         </div>
       </div>

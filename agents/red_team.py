@@ -6,10 +6,18 @@ from pydantic import BaseModel, Field
 from google.adk import Agent
 from agents.adk_config import get_adk_model
 
+import hashlib
+import uuid
 from backend.schemas.transaction import Transaction, DeviceSignals, FeatureVector
 from backend.engine.features import FeaturePipeline
 from backend.engine.risk_scorer import TabularRiskScorer, RiskDecision
 from agents.scam_shield import ScamShieldOrchestrator, ScamShieldDecision
+from backend.cache.semantic_cache import default_semantic_cache
+from agents.intervention_agent import InterventionDialog
+
+# Institutional Token Savings Model Constants
+ESTIMATED_MONTHLY_EVASION_ATTEMPTS = 50
+AVERAGE_TOKENS_PER_INTERVENTION_AGENT_DRAFT = 370
 
 class AttackArchetype(str, Enum):
     OBFUSCATED_REMARK = "OBFUSCATED_REMARK"
@@ -28,6 +36,15 @@ class DefenseGapReport(BaseModel):
     vulnerability_found: str
     remediation_rule: str
     recommended_patch: str
+
+class ImmunePatchResult(BaseModel):
+    patch_id: str
+    archetype: AttackArchetype
+    status: str = "IMMUNIZED"
+    regex_signature_added: str
+    semantic_clusters_seeded: List[str]
+    audit_hash: str
+    tokens_saved_estimate_monthly: int
 
 def create_adk_red_team_agent() -> Agent:
     """Creates a Google ADK Agent for adversarial attack generation and gap analysis."""
@@ -98,6 +115,88 @@ class RedTeamAgent:
             vulnerability_found=vuln,
             remediation_rule=remediation,
             recommended_patch=patch
+        )
+
+    def synthesize_immune_patch(self, archetype: AttackArchetype) -> ImmunePatchResult:
+        """
+        Closed-Loop Self-Healing Engine:
+        Takes an exploited adversarial archetype, generates normalized semantic signatures,
+        and injects hot-reloaded zero-token intervention clusters directly into the Semantic Cache.
+        """
+        patch_id = f"PATCH-IMMUNE-{uuid.uuid4().hex[:8].upper()}"
+        seeded_clusters: List[str] = []
+        regex_sig = ""
+
+        if archetype == AttackArchetype.OBFUSCATED_REMARK:
+            regex_sig = r"(?i)(f[@a]mily|m[3e]dical|h[0o]spital|cl[3e]arance|d[3e]posit)"
+            typo = "OBFUSCATED_LEETSPEAK_REMARK"
+            dialog_en = InterventionDialog(
+                headline="EMERGENCY ALERT: Obfuscated Scam Signature Intercepted",
+                body="This payment remark contains obfuscated leetspeak patterns matching coercive scam scripts. Fraudsters disguise transaction purposes to bypass bank keyword filters.",
+                language="en",
+                primary_action="Reject & Secure Account",
+                secondary_action="Call Bank Cyber Fraud Desk",
+                override_action="I verify this merchant, proceed",
+                risk_level="CRITICAL"
+            )
+            dialog_hi = InterventionDialog(
+                headline="आपातकालीन चेतावनी: धोखाधड़ी पैटर्न का पता चला",
+                body="इस लेन-देन के विवरण में संदिग्ध कोड पाए गए हैं। जालसाज बैंक सुरक्षा नियमों से बचने के लिए शब्दों को विकृत करते हैं।",
+                language="hi",
+                primary_action="भुगतान अस्वीकार करें",
+                secondary_action="1930 साइबर हेल्पलाइन पर कॉल करें",
+                override_action="आगे बढ़ें",
+                risk_level="CRITICAL"
+            )
+            default_semantic_cache.store(typo, "en", dialog_en)
+            default_semantic_cache.store(typo, "hi", dialog_hi)
+            seeded_clusters = [f"{typo}:en", f"{typo}:hi"]
+
+        elif archetype == AttackArchetype.STRUCTURED_SMURFING:
+            regex_sig = r"amt:[4-5]\d{4}\.00;first_time:true;velocity_window:30m"
+            typo = "STRUCTURED_THRESHOLD_SMURFING"
+            dialog = InterventionDialog(
+                headline="AML COMPLIANCE WARNING: Structured Smurfing Detected",
+                body="Transfer of ₹49,900 to an unverified beneficiary matches rapid threshold smurfing designed to bypass PAN / mandatory KYC declaration rules.",
+                language="en",
+                primary_action="Pause Transfer & Require In-Branch Verification",
+                secondary_action="Consult AML Officer",
+                override_action="Submit Signed KYC Justification",
+                risk_level="CRITICAL"
+            )
+            default_semantic_cache.store(typo, "en", dialog)
+            seeded_clusters = [f"{typo}:en"]
+
+        else: # DEEPFAKE_AUTHORITY
+            regex_sig = r"(?i)(confidential\s+compliance|statutory\s+clearance|judicial\s+escrow)"
+            typo = "DEEPFAKE_AUTHORITY_COERCION"
+            dialog = InterventionDialog(
+                headline="CRITICAL COERCION ALERT: Impersonation Script Blocked",
+                body="Narration refers to 'statutory/judicial clearance'. Law enforcement and court registrars NEVER issue clearance orders or accept UPI escrow deposits.",
+                language="en",
+                primary_action="Block Transfer Immediately",
+                secondary_action="Report to National Cybercrime Portal 1930",
+                override_action="Proceed Under Informed Consent Vault",
+                risk_level="CRITICAL"
+            )
+            default_semantic_cache.store(typo, "en", dialog)
+            seeded_clusters = [f"{typo}:en"]
+
+        audit_payload = f"{patch_id}:{archetype.value}:{regex_sig}:{datetime.now(timezone.utc).isoformat()}"
+        audit_hash = hashlib.sha256(audit_payload.encode()).hexdigest()
+
+        # Institutional Token Savings Model:
+        # 50 expected monthly evasive attempts intercepted * 370 tokens per agentic friction draft
+        estimated_monthly_savings = ESTIMATED_MONTHLY_EVASION_ATTEMPTS * AVERAGE_TOKENS_PER_INTERVENTION_AGENT_DRAFT
+
+        return ImmunePatchResult(
+            patch_id=patch_id,
+            archetype=archetype,
+            status="IMMUNIZED",
+            regex_signature_added=regex_sig,
+            semantic_clusters_seeded=seeded_clusters,
+            audit_hash=audit_hash,
+            tokens_saved_estimate_monthly=estimated_monthly_savings
         )
 
     def _synthesize_adversarial_payload(self, archetype: AttackArchetype) -> Transaction:

@@ -52,6 +52,9 @@ class TabularRiskScorer:
         "receiver_cold_start_anomaly": 0.22,
         "savings_liquidation_flag": 0.12,
         "behavioral_hesitation_flag": 0.08,
+        # Biometrics & Telemetry upgrades
+        "gyroscope_tremor_score": 0.10,
+        "untrusted_clipboard_flag": 0.12,
     }
 
     def score(self, features: FeatureVector) -> RiskScoreResult:
@@ -73,6 +76,8 @@ class TabularRiskScorer:
             "receiver_cold_start_anomaly": features.receiver_cold_start_anomaly,
             "savings_liquidation_flag": features.savings_liquidation_flag,
             "behavioral_hesitation_flag": features.behavioral_hesitation_flag,
+            "gyroscope_tremor_score": features.gyroscope_tremor_score,
+            "untrusted_clipboard_flag": features.untrusted_clipboard_flag,
         }
 
         contributions: List[FeatureContribution] = []

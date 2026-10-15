@@ -16,6 +16,10 @@ class MuleGraphAnalysis(BaseModel):
     graph_nodes: List[Dict[str, Any]] = Field(default_factory=list)
     graph_edges: List[Dict[str, Any]] = Field(default_factory=list)
     summary: str = ""
+    # Multi-hop smurfing fields
+    max_hop_depth: int = 3
+    smurfing_splits_count: int = 5
+    terminal_sinks: List[str] = Field(default_factory=lambda: ["ATM-MUMBAI-BANDRA-04", "P2P-USDT-OTC-DESK"])
 
 try:
     from google.cloud import bigquery
