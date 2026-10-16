@@ -24,13 +24,15 @@ wheels/
 .installed.cfg
 *.egg
 
-# Video & Media Recordings
+# Video & Heavy Media Recordings (Host in Cloud Storage / GitHub Releases, not git tree)
 *.mp4
 *.webm
-!brag-output/*.mp4
-!assets/videos/*.mp4
+*.avi
+*.mov
+*.mkv
 video_temp/
-brag-output/work/
+brag-output/
+assets/videos/*.mp4
 env.bak/
 venv.bak/
 

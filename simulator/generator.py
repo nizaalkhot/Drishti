@@ -9,19 +9,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional, List, Tuple
 from backend.schemas.transaction import Transaction, DeviceSignals
-
-class ScenarioType(str, Enum):
-    DIGITAL_ARREST = "DIGITAL_ARREST"
-    KYC_APK_TAKEOVER = "KYC_APK_TAKEOVER"
-    MULE_AGGREGATOR_FAN_IN = "MULE_AGGREGATOR_FAN_IN"
-    HIGH_YIELD_INVESTMENT = "HIGH_YIELD_INVESTMENT"
-    LEGITIMATE = "LEGITIMATE"
-    # Emerging & Boundary Test Scenarios
-    LEGITIMATE_HOSPITAL_EMERGENCY = "LEGITIMATE_HOSPITAL_EMERGENCY"
-    IOS_RESTRICTED_DIGITAL_ARREST = "IOS_RESTRICTED_DIGITAL_ARREST"
-    FRESH_STUDENT_MULE_COLD_START = "FRESH_STUDENT_MULE_COLD_START"
-    I4C_CONSORTIUM_SYNDICATE = "I4C_CONSORTIUM_SYNDICATE"
-    OVERRIDE_ATTEMPT_HIGH_COERCION = "OVERRIDE_ATTEMPT_HIGH_COERCION"
+from backend.schemas.api import ScenarioType
 
 VICTIM_NAMES: List[Tuple[str, str, str]] = [
     ("Arun Joshi", "arun.joshi@okaxis", "SBI"),

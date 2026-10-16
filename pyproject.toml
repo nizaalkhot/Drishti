@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "drishti"
+version = "1.0.0"
+description = "Real-Time AI Multi-Agent Fraud Prevention & Scam Intervention Engine for UPI / ISO-20022"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "Team Gain", email = "drishti-core@example.com"}
+]
+keywords = ["fraud-detection", "fintech", "upi", "iso-20022", "multi-agent", "adk", "gemini"]
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn>=0.28.0",
+    "pydantic>=2.6.0",
+    "httpx>=0.27.0",
+    "google-genai>=2.0.0",
+    "google-adk>=2.8.0",
+    "google-cloud-bigquery>=3.20.0",
+    "google-cloud-aiplatform>=1.45.0",
+    "google-cloud-documentai>=2.20.0",
+    "google-cloud-discoveryengine>=0.11.0",
+    "google-cloud-pubsub>=2.19.0",
+    "sqlalchemy[asyncio]>=2.0.0",
+    "greenlet>=3.0.0",
+    "aiosqlite>=0.19.0",
+    "asyncpg>=0.29.0",
+    "redis>=5.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.3.0",
+]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+asyncio_mode = "strict"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::pytest.PytestUnhandledThreadExceptionWarning",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]

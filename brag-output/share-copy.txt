@@ -1,5 +1,0 @@
-When scammers stage fake CBI police stations to steal life savings, Drishti intercepts the UPI payment in 0.04 milliseconds before the PIN is entered.
-
-Powered by Gemini on Vertex AI and BigQuery, it injects dynamic cooling friction, maps multi-hop smurfing mule rings, and auto-files regulatory FIU-IND STR dossiers with cryptographic consent receipts.
-
-Open source on GitHub: https://github.com/nizaalkhot/Drishti

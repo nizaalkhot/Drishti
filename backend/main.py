@@ -66,6 +66,7 @@ app.include_router(consortium_router)
 app.include_router(governance_router)
 
 @app.get("/api/v1/health")
+@app.get("/health")
 async def health_check():
     """Service health and environment metadata."""
     return {

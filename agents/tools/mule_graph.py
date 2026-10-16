@@ -42,10 +42,19 @@ class MuleGraphService:
             except Exception:
                 self.bq_client = None
 
+        self._max_cache_entries = 2000
         self._beneficiary_inflows: Dict[str, List[Dict[str, Any]]] = {}
         self._beneficiary_outflows: Dict[str, List[Dict[str, Any]]] = {}
         self._device_to_accounts: Dict[str, List[str]] = {}
         self._account_to_cluster: Dict[str, str] = {}
+
+    def _evict_if_needed(self):
+        """Enforces bounded in-memory capacity to prevent OOM under concurrent API stress."""
+        if len(self._beneficiary_inflows) > self._max_cache_entries:
+            oldest_key = next(iter(self._beneficiary_inflows))
+            self._beneficiary_inflows.pop(oldest_key, None)
+            self._beneficiary_outflows.pop(oldest_key, None)
+            self._account_to_cluster.pop(oldest_key, None)
 
     def seed_test_cluster(
         self,
@@ -55,6 +64,7 @@ class MuleGraphService:
         cluster_id: str = "RING-CYBER-MULE-01"
     ):
         """Seeds a known mule ring cluster for demonstration and testing."""
+        self._evict_if_needed()
         self._account_to_cluster[aggregator_id] = cluster_id
         
         # Link shared device

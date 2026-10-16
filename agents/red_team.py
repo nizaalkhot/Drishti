@@ -19,10 +19,7 @@ from agents.intervention_agent import InterventionDialog
 ESTIMATED_MONTHLY_EVASION_ATTEMPTS = 50
 AVERAGE_TOKENS_PER_INTERVENTION_AGENT_DRAFT = 370
 
-class AttackArchetype(str, Enum):
-    OBFUSCATED_REMARK = "OBFUSCATED_REMARK"
-    STRUCTURED_SMURFING = "STRUCTURED_SMURFING"
-    DEEPFAKE_AUTHORITY = "DEEPFAKE_AUTHORITY"
+from backend.schemas.api import AttackArchetype
 
 class DefenseGapReport(BaseModel):
     archetype: AttackArchetype
