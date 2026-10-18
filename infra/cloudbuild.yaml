@@ -1,12 +1,15 @@
+substitutions:
+  _TAG: 'latest'
+
 steps:
   # ==============================================================================
   # 1. Drishti Core & Unified API Engine (Multi-stage Python + React Bundle)
   # ==============================================================================
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/backend:$COMMIT_SHA', '-t', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/backend:latest', '-f', 'Dockerfile', '.']
+    args: ['build', '-t', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/backend:$_TAG', '-t', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/backend:latest', '-f', 'Dockerfile', '.']
 
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/backend:$COMMIT_SHA']
+    args: ['push', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/backend:$_TAG']
 
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/backend:latest']
@@ -18,7 +21,7 @@ steps:
       - 'deploy'
       - 'drishti-core'
       - '--image'
-      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/backend:$COMMIT_SHA'
+      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/backend:$_TAG'
       - '--region'
       - 'asia-south1'
       - '--platform'
@@ -47,10 +50,10 @@ steps:
   # 2. Drishti Dedicated Web UI (Nginx Cloud Run Service)
   # ==============================================================================
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/frontend:$COMMIT_SHA', '-t', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/frontend:latest', '-f', 'web/Dockerfile', '.']
+    args: ['build', '-t', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/frontend:$_TAG', '-t', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/frontend:latest', '-f', 'web/Dockerfile', '.']
 
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/frontend:$COMMIT_SHA']
+    args: ['push', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/frontend:$_TAG']
 
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/frontend:latest']
@@ -62,7 +65,7 @@ steps:
       - 'deploy'
       - 'drishti-web'
       - '--image'
-      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/frontend:$COMMIT_SHA'
+      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/frontend:$_TAG'
       - '--region'
       - 'asia-south1'
       - '--platform'
@@ -82,9 +85,9 @@ steps:
       - 'VITE_API_BASE=https://drishti-core-518872797698.asia-south1.run.app'
 
 images:
-  - 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/backend:$COMMIT_SHA'
+  - 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/backend:$_TAG'
   - 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/backend:latest'
-  - 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/frontend:$COMMIT_SHA'
+  - 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/frontend:$_TAG'
   - 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/frontend:latest'
 
 options:
