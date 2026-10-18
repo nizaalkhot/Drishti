@@ -114,6 +114,8 @@ def _build_txn(
         device=device,
         is_first_time_payee=is_first_time,
         customer_avg_tx_amount=avg_amt,
+        is_synthetic=True,
+        environment="sandbox",
         **kwargs
     )
 

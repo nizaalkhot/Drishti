@@ -50,6 +50,7 @@ class ScoringResponse(BaseModel):
     cold_start_indicators: List[str] = Field(default_factory=list)
     can_override: bool = True
     telemetry_confidence: float = 1.0
+    is_synthetic: bool = False
 
 class FreezeRequest(BaseModel):
     reason: str = "Suspected Mule Aggregator Ring"

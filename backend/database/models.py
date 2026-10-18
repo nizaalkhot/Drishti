@@ -21,6 +21,8 @@ class CaseDossierModel(Base):
     risk_score = Column(Float, default=0.0)
     decision = Column(String(32), default="HOLD")
     scam_typology = Column(String(64), nullable=True)
+    is_synthetic = Column(Boolean, default=False, index=True)
+    environment = Column(String(32), default="production", index=True)
     
     # Complete serializations
     transaction_json = Column(JSON, nullable=True)

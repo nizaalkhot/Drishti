@@ -42,6 +42,15 @@ class MuleGraphService:
             except Exception:
                 self.bq_client = None
 
+        redis_url = os.getenv("REDIS_URL")
+        self.redis_client = None
+        if redis_url:
+            try:
+                import redis
+                self.redis_client = redis.from_url(redis_url, decode_responses=True)
+            except Exception:
+                self.redis_client = None
+
         self._max_cache_entries = 2000
         self._beneficiary_inflows: Dict[str, List[Dict[str, Any]]] = {}
         self._beneficiary_outflows: Dict[str, List[Dict[str, Any]]] = {}
@@ -91,6 +100,18 @@ class MuleGraphService:
             {"target_id": cash_out_mule, "amount": 235000.0, "timestamp_minutes_ago": 5}
         ]
 
+        # Synchronize with distributed Redis store if available
+        if self.redis_client:
+            try:
+                for v in victim_senders:
+                    self.redis_client.sadd(f"mule:fanin:{aggregator_id}", v)
+                self.redis_client.expire(f"mule:fanin:{aggregator_id}", 86400)
+                self.redis_client.sadd(f"mule:device:{device_id}", aggregator_id)
+                self.redis_client.sadd(f"mule:device:{device_id}", cash_out_mule)
+                self.redis_client.expire(f"mule:device:{device_id}", 86400)
+            except Exception as e:
+                logger.debug("Redis mule state sync skipped: %s", e)
+
     def analyze_beneficiary(
         self,
         beneficiary_id: str,
@@ -106,6 +127,18 @@ class MuleGraphService:
         fan_in = len(inflows)
         total_inflow = sum(item["amount"] for item in inflows)
         total_outflow = sum(item["amount"] for item in outflows)
+
+        # Merge distributed Redis state
+        if self.redis_client:
+            try:
+                redis_fanin = self.redis_client.scard(f"mule:fanin:{beneficiary_id}")
+                if redis_fanin > 0:
+                    fan_in = max(fan_in, redis_fanin)
+                redis_shared = self.redis_client.smembers(f"mule:device:{device_id}")
+                if redis_shared:
+                    shared_other = list(set(shared_other).union(set(redis_shared) - {beneficiary_id}))
+            except Exception as e:
+                logger.debug("Redis mule state read error: %s", e)
 
         if self.bq_client:
             try:

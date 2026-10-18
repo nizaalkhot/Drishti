@@ -49,6 +49,9 @@ class Transaction(BaseModel):
     receiver_account_age_days: int = Field(180, description="Age of receiver bank account in days")
     receiver_kyc_tier: str = Field("REGULAR", description="Beneficiary KYC profile: REGULAR, STUDENT, NO_INCOME, COMMERCIAL")
     receiver_vpa_binding_age_hours: float = Field(720.0, description="Hours since receiver VPA was bound to SIM/hardware")
+    # Synthetic Data & Sandbox Isolation
+    is_synthetic: bool = Field(False, description="Flag indicating simulated or red-team synthetic transaction")
+    environment: str = Field("production", description="Originating environment: production or sandbox")
 
 class FeatureVector(BaseModel):
     velocity_1h_count: int = 0

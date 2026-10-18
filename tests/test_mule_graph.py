@@ -34,3 +34,18 @@ def test_clean_beneficiary_has_low_mule_score():
     assert analysis.mule_risk_score <= 0.15
     assert analysis.fan_in_count_24h <= 1
     assert analysis.rapid_passthrough_detected is False
+
+def test_mule_graph_service_bounded_capacity():
+    """Verify that MuleGraphService evicts entries when exceeding max capacity."""
+    service = MuleGraphService()
+    service._max_cache_entries = 10
+
+    for i in range(25):
+        service.seed_test_cluster(
+            aggregator_id=f"MULE-{i}",
+            device_id=f"DEV-{i}",
+            victim_senders=[f"VICTIM-{i}-1", f"VICTIM-{i}-2"]
+        )
+
+    # Inflows should be bounded
+    assert len(service._beneficiary_inflows) <= 15

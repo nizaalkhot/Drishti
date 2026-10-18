@@ -26,7 +26,11 @@ from backend.api.deps import (
 router = APIRouter(tags=["Scoring & Simulation"])
 
 @router.post("/api/v1/score", response_model=ScoringResponse)
-async def score_transaction(tx: Transaction, language: str = "en"):
+async def score_transaction(
+    tx: Transaction,
+    language: str = "en",
+    wait_for_agents: bool = True
+):
     start_total = time.perf_counter()
     metrics_store["total_processed"] += 1
 
@@ -53,16 +57,32 @@ async def score_transaction(tx: Transaction, language: str = "en"):
     # 3. Layer 2: Scam Shield (Grey Zone: 0.35 - 0.75)
     if l1_result.decision == RiskDecision.GREY_ZONE_SCAM_SHIELD:
         metrics_store["gemini_layer2_invocations"] += 1
-        # Enforce strict UPI/ISO-20022 real-time banking SLA (configurable via DRISHTI_BANKING_SLA_SECONDS, default 180ms)
-        sla_timeout = float(os.getenv("DRISHTI_BANKING_SLA_SECONDS", "0.180"))
-        try:
-            scam_decision = await asyncio.wait_for(
-                scam_shield.evaluate(tx, features, language=language),
-                timeout=sla_timeout
-            )
-        except asyncio.TimeoutError:
-            # Deterministic sub-2ms safety fallback ensuring sub-200ms p99 SLA is NEVER breached
+
+        if not wait_for_agents:
+            # PURE TWO-TIER HOT-PATH (<15ms SLA): Return immediate deterministic friction, dispatch deep agents in background
             scam_decision = scam_shield.generate_fast_fallback_decision(tx, features, language=language)
+            # Asynchronously enrich case dossier without blocking payment switch
+            async def _bg_enrich():
+                try:
+                    deep_dec = await scam_shield.evaluate(tx, features, language=language)
+                    if deep_dec.is_scam_detected:
+                        c = copilot.create_case(tx, features, l1_result, deep_dec)
+                        copilot.draft_str(c.case_id)
+                except Exception:
+                    pass
+            asyncio.create_task(_bg_enrich())
+        else:
+            # Enforce strict UPI/ISO-20022 real-time banking SLA (configurable via DRISHTI_BANKING_SLA_SECONDS, default 180ms)
+            sla_timeout = float(os.getenv("DRISHTI_BANKING_SLA_SECONDS", "0.180"))
+            try:
+                scam_decision = await asyncio.wait_for(
+                    scam_shield.evaluate(tx, features, language=language),
+                    timeout=sla_timeout
+                )
+            except asyncio.TimeoutError:
+                # Deterministic sub-2ms safety fallback ensuring sub-200ms p99 SLA is NEVER breached
+                scam_decision = scam_shield.generate_fast_fallback_decision(tx, features, language=language)
+
         friction_tier = scam_decision.friction_tier
         semantic_cache_hit = scam_decision.semantic_cache_hit
         tokens_saved = scam_decision.tokens_saved
@@ -132,6 +152,7 @@ async def score_transaction(tx: Transaction, language: str = "en"):
         cold_start_indicators=cold_start_inds,
         can_override=can_override,
         telemetry_confidence=features.telemetry_confidence,
+        is_synthetic=tx.is_synthetic,
         telemetry={
             "is_call_active": tx.device.is_call_active,
             "call_duration_minutes": tx.device.call_duration_minutes,

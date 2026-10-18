@@ -4,7 +4,7 @@ from fastapi import APIRouter
 from backend.security.consent_vault import default_consent_vault, ConsentRequest, ConsentReceipt
 from backend.cache.semantic_cache import default_semantic_cache
 from agents.red_team import DefenseGapReport, ImmunePatchResult
-from backend.api.schemas import RedTeamProbeRequest
+from backend.schemas import RedTeamProbeRequest
 from backend.api.deps import metrics_store, red_team, broadcast_event
 
 router = APIRouter(tags=["Governance, Cache & Metrics"])

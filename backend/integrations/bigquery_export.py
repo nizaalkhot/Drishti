@@ -52,11 +52,13 @@ class BigQueryExportService:
 
         if self.bq_client:
             try:
-                errors = self.bq_client.insert_rows_json(self.transactions_table, [payload])
+                is_synthetic = payload.get("is_synthetic", False)
+                target_table = f"{self.transactions_table}_sandbox" if is_synthetic else self.transactions_table
+                errors = self.bq_client.insert_rows_json(target_table, [payload])
                 if errors:
                     logger.error(f"BigQuery streaming insert errors: {errors}")
                     return False
-                logger.info(f"Successfully streamed risk event {payload.get('txn_id')} to BigQuery table {self.transactions_table}")
+                logger.info(f"Successfully streamed risk event {payload.get('txn_id')} to BigQuery table {target_table}")
                 return True
             except Exception as e:
                 logger.warning(f"BigQuery stream failed ({e}), retained in local journal.")

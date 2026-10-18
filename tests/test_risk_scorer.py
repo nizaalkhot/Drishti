@@ -54,3 +54,43 @@ def test_critical_risk_is_held():
     result = scorer.score(features)
     assert result.score > 0.75
     assert result.decision == RiskDecision.HOLD
+
+def test_semantic_intervention_cache_sub_millisecond_lookup():
+    """Verify intervention copy cache returns in <2ms with zero token cost."""
+    from backend.cache.intervention_cache import default_intervention_cache
+    hit = default_intervention_cache.lookup("DIGITAL_ARREST", "en")
+    assert hit is not None
+    dialog, latency = hit
+    assert "Digital Arrest" in dialog.headline or "FRAUD ALERT" in dialog.headline
+    assert latency < 2
+
+def test_two_tier_fast_fallback_under_5ms():
+    """Verify fast fallback provides sub-5ms deterministic friction without LLM latency."""
+    from datetime import datetime, timezone
+    from backend.schemas import Transaction, DeviceSignals
+    from agents.scam_shield import ScamShieldOrchestrator
+
+    orchestrator = ScamShieldOrchestrator()
+    tx = Transaction(
+        id="TXN-TT-TEST",
+        timestamp=datetime.now(timezone.utc),
+        sender_id="CUST-TT",
+        sender_vpa="sender@upi",
+        sender_account="12345",
+        receiver_id="MULE-TT",
+        receiver_vpa="mule@upi",
+        receiver_ifsc="HDFC0001234",
+        amount=100000.0,
+        remark="Police fine",
+        device=DeviceSignals(
+            device_id="DEV-TT",
+            ip_address="127.0.0.1",
+            is_call_active=True,
+            call_duration_minutes=40.0
+        )
+    )
+    features = FeatureVector(is_call_active=1.0)
+    decision = orchestrator.generate_fast_fallback_decision(tx, features)
+    assert decision.is_scam_detected is True
+    assert decision.fallback_applied is True
+    assert decision.latency_ms <= 5.0

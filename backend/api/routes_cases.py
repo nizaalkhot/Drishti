@@ -1,9 +1,10 @@
 from typing import Optional
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Response, Depends
 from pydantic import BaseModel, Field
 
-from backend.api.schemas import FreezeRequest, SignSTRRequest, DismissRequest
+from backend.schemas import FreezeRequest, SignSTRRequest, DismissRequest
+from backend.security.auth import Role, User, require_roles
 from backend.api.deps import copilot, broadcast_event
 from backend.integrations.document_ai import default_document_ai
 from backend.compliance.finnet_generator import generate_finnet2_xml
@@ -28,28 +29,41 @@ async def get_case(case_id: str):
     return case
 
 @router.post("/api/v1/cases/{case_id}/freeze")
-async def freeze_account(case_id: str, req: FreezeRequest):
+async def freeze_account(
+    case_id: str,
+    req: FreezeRequest,
+    user: User = Depends(require_roles(Role.COMPLIANCE_OFFICER, Role.ADMIN))
+):
     try:
         res = copilot.freeze_account(case_id, reason=req.reason)
-        await broadcast_event("ACCOUNT_FROZEN", {"case_id": case_id, "details": res})
+        await broadcast_event("ACCOUNT_FROZEN", {"case_id": case_id, "details": res, "authorized_by": user.username})
         return res
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
 @router.post("/api/v1/cases/{case_id}/export-str")
-async def export_str(case_id: str, req: SignSTRRequest):
+async def export_str(
+    case_id: str,
+    req: SignSTRRequest,
+    user: User = Depends(require_roles(Role.COMPLIANCE_OFFICER, Role.ADMIN))
+):
     try:
-        res = copilot.sign_and_export_str(case_id, officer_name=req.officer_name)
-        await broadcast_event("STR_APPROVED", {"case_id": case_id, "details": res})
+        officer = req.officer_name or user.username
+        res = copilot.sign_and_export_str(case_id, officer_name=officer)
+        await broadcast_event("STR_APPROVED", {"case_id": case_id, "details": res, "signed_by": officer})
         return res
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
 @router.post("/api/v1/cases/{case_id}/dismiss")
-async def dismiss_case(case_id: str, req: DismissRequest):
+async def dismiss_case(
+    case_id: str,
+    req: DismissRequest,
+    user: User = Depends(require_roles(Role.ANALYST, Role.COMPLIANCE_OFFICER, Role.ADMIN))
+):
     try:
         res = copilot.dismiss_false_positive(case_id, notes=req.analyst_notes)
-        await broadcast_event("CASE_DISMISSED", {"case_id": case_id, "details": res})
+        await broadcast_event("CASE_DISMISSED", {"case_id": case_id, "details": res, "analyst": user.username})
         return res
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

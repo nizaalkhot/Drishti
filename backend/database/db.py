@@ -66,10 +66,20 @@ AsyncSessionLocal = async_sessionmaker(
     autoflush=False
 )
 
+from sqlalchemy import text
+
 async def init_db():
-    """Initializes database schema tables."""
+    """Initializes database schema tables and ensures missing columns are added."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        try:
+            await conn.execute(text("ALTER TABLE case_dossiers ADD COLUMN is_synthetic BOOLEAN DEFAULT 0"))
+        except Exception:
+            pass
+        try:
+            await conn.execute(text("ALTER TABLE case_dossiers ADD COLUMN environment VARCHAR(32) DEFAULT 'production'"))
+        except Exception:
+            pass
 
 @asynccontextmanager
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
