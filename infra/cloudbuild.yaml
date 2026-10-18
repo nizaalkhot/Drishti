@@ -1,13 +1,16 @@
 steps:
-  # 1. Build Production Container Image
+  # ==============================================================================
+  # 1. Drishti Core & Unified API Engine (Multi-stage Python + React Bundle)
+  # ==============================================================================
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/backend:$COMMIT_SHA', '-f', 'infra/Dockerfile', '.']
+    args: ['build', '-t', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/backend:$COMMIT_SHA', '-t', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/backend:latest', '-f', 'Dockerfile', '.']
 
-  # 2. Push Container to Google Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/backend:$COMMIT_SHA']
 
-  # 3. Deploy to Google Cloud Run with VPC Connector & Secret Manager
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/backend:latest']
+
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
@@ -40,7 +43,49 @@ steps:
       - '--set-secrets'
       - 'DATABASE_URL=drishti-db-url:latest,REDIS_URL=drishti-redis-url:latest,GEMINI_API_KEY=drishti-gemini-key:latest'
 
+  # ==============================================================================
+  # 2. Drishti Dedicated Web UI (Nginx Cloud Run Service)
+  # ==============================================================================
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/frontend:$COMMIT_SHA', '-t', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/frontend:latest', '-f', 'web/Dockerfile', '.']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/frontend:$COMMIT_SHA']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/frontend:latest']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'drishti-web'
+      - '--image'
+      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/frontend:$COMMIT_SHA'
+      - '--region'
+      - 'asia-south1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--memory'
+      - '512Mi'
+      - '--cpu'
+      - '1'
+      - '--min-instances'
+      - '0'
+      - '--max-instances'
+      - '20'
+      - '--concurrency'
+      - '100'
+      - '--set-env-vars'
+      - 'VITE_API_BASE=https://drishti-core-518872797698.asia-south1.run.app'
+
 images:
   - 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/backend:$COMMIT_SHA'
+  - 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/backend:latest'
+  - 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/frontend:$COMMIT_SHA'
+  - 'asia-south1-docker.pkg.dev/$PROJECT_ID/drishti/frontend:latest'
+
 options:
   logging: CLOUD_LOGGING_ONLY

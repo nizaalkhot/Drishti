@@ -1,4 +1,17 @@
-# Drishti Core Production & Orchestration Container
+# ==============================================================================
+# Drishti — Multi-Stage Production Container (Unified Frontend + Backend Core)
+# ==============================================================================
+
+# Stage 1: Build React / Vite Frontend Single Page Application
+FROM node:20-alpine AS frontend-builder
+WORKDIR /app/web
+COPY web/package.json web/package-lock.json ./
+RUN npm ci
+COPY web/ ./
+ENV VITE_API_BASE=""
+RUN npm run build
+
+# Stage 2: Production Python Backend Runtime
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -24,6 +37,11 @@ COPY agents/ ./agents/
 COPY simulator/ ./simulator/
 COPY eval/ ./eval/
 COPY assets/ ./assets/
+COPY alembic/ ./alembic/
+COPY alembic.ini ./
+
+# Copy compiled frontend distribution from Stage 1
+COPY --from=frontend-builder /app/web/dist ./web/dist
 
 EXPOSE 8080
 

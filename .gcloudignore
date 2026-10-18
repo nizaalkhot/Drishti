@@ -1,0 +1,16 @@
+.git
+.gitignore
+.gcloudignore
+.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+drishti_local.db
+web/node_modules/
+web/dist/
+brag-output/
+.gemini/
+scratch/
